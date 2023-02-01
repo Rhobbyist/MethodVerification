@@ -1,0 +1,62 @@
+{% extends "report/layout.html" %}  
+{% block content %}
+
+<style>
+    .operatelog_Table{
+        table-layout: fixed;
+        /*table表格宽度固定，同时td内容过长也不会被撑开*/
+        word-break: break-all;
+        border-collapse: collapse;
+        /* 关键属性：合并表格内外边框(其实表格边框有2px，外面1px，里面还有1px) */
+        border: 2px solid #000;
+        border-left: none;
+        border-right: none;
+        width: 1200px;
+        margin: 50px auto;
+        /*居中 */
+    }
+
+    .operatelog_Table caption{
+        font-size: large;
+        font-weight: 900;
+        margin: 20px auto;
+    }
+
+    .operatelog_Tabletr th{
+        /* 字体加粗居中 */
+        font-weight: bold;
+        font-family: Times New Roman, 宋体;
+        text-align: center;
+        /* 设置下边框 */
+        border: 2px solid #000;
+        border-left: none;
+        border-right: none;
+        font-weight: bold;
+    }
+
+    .operatelog_Tabletr td{
+        text-align: center;
+    }
+</style>
+
+{% load myfilter %}
+
+<table class="operatelog_Table table" cellpadding="10">
+    <caption>操作日志</caption>
+    <tr class="operatelog_Tabletr">
+        <th>编号</th>
+        <th>操作</th>
+        <th>操作人</th>
+        <th>操作时间</th>
+    </tr>
+    {%for i in Ooperation %}
+        <tr class="operatelog_Tabletr">
+            <td>{{forloop.counter}}</td>
+            <td>{{Ooperation|get_index:forloop.counter}}</td>
+            <td>{{Ooperator|get_index:forloop.counter}}</td>
+            <td>{{Otime|get_index:forloop.counter}}</td>    
+        </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

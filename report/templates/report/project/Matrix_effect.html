@@ -1,0 +1,172 @@
+{% extends "report/layout.html" %}
+{% block content %}
+
+<style>
+    /*table表格宽度固定，同时td内容过长也不会被撑开*/
+    table {
+        table-layout: fixed;
+        word-break: break-all;
+    }
+
+    th {
+        text-align: center;
+    }
+
+    td {
+        text-align: center;
+    }
+
+    .Matrix_effect_Tabletr th{
+        width: 14.28%;
+    }
+
+    /* 验证结果样式 */
+    #verifyresult{
+        font-weight: 700;
+        color:green;
+    }
+</style>
+
+<body>
+    <div class="container">
+        <form action="{% url 'verifyagain' %}" method="POST">
+            <!-- 1 验证基本信息展示 -->
+            <div class="basicinfo">
+                <!-- 标题 -->
+                <h2>验证基本信息</h2>
+                <br>
+
+                <!-- 仪器型号及验证时机 -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">仪器型号</label>
+                            <input type="email" class="form-control" value="{{instrument_num}}" name="instrument_num" readonly>
+                        </div> 
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">验证时机</label>
+                            <input type="email" class="form-control" value="{{verifyoccasion}}" name="verifyoccasion" readonly>
+                        </div> 
+                    </div>
+                </div>
+
+                <!-- 检测平台及检测项目 -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">检测平台</label>
+                            <input type="email" class="form-control" value="{{Detectionplatform}}" name="Detectionplatform" readonly>
+                        </div> 
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">检测项目</label>
+                            <input type="email" class="form-control" value="{{project}}" name="project" readonly>
+                        </div> 
+                    </div>
+                </div>
+                
+                <!-- 仪器平台及仪器厂家 -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">仪器平台</label>
+                            <input type="email" class="form-control" value="{{platform}}" name="platform" readonly>
+                        </div> 
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">仪器厂家</label>
+                            <input type="email" class="form-control" value="{{manufacturers}}" name="manufacturers" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最大允许偏差 -->
+            <input hidden="hidden" value="{{Result.maxBias}}" name="maxBias" id="maxBias">
+
+            <!-- 2 分界线 -->
+            <h1 class="page-header"></h1>
+
+            <!-- 3 验证结果展示 -->
+            <h2>验证指标：基质效应</h2>
+            <h2>验证结果：<span id="verifyresult">通过!</span></h2>
+            {%for key,value in Result.Matrix_effect_dict.items %}
+            <table border="1" cellpadding="8" align="center">
+                <caption>
+                    <h3>{{key}}验证结果</h3>
+                </caption>
+                <tr class="Matrix_effect_Tabletr">
+                    <th>样本编号</th>
+                    <th>Area</th>
+                    <th>IS Area</th>
+                    <th>Area/IS Area</th>
+                    <th>Area/IS Area的平均值</th>
+                    <th>混合样本Area/IS Area的理论值</th>
+                    <th>偏差(%)</th>
+                </tr>
+
+                {%for i,j in value.items %}
+                <tr>
+                    <td rowspan="3">{{i}}</td>
+                    <td>{{j.0}}</td>
+                    <td>{{j.1}}</td>
+                    <td>{{j.2}}</td>
+                    <td rowspan="3">{{j.9}}</td>
+                    <td rowspan="3">{{j.10}}</td>
+                    <td class="bias">{{j.11}}</td>
+                </tr>
+                <tr>
+                    <td>{{j.3}}</td>
+                    <td>{{j.4}}</td>
+                    <td>{{j.5}}</td>
+                    <td class="bias">{{j.12}}</td>
+                </tr>
+                <tr>
+                    <td>{{j.6}}</td>
+                    <td>{{j.7}}</td>
+                    <td>{{j.8}}</td>
+                    <td class="bias">{{j.13}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <br>
+            {% endfor %}
+            <div><input class="btn btn-primary" id="submit" type="submit" value="继续验证" /></div>
+        </form>
+        <br>
+        <form action="{% url 'returnback' %}" method="POST">
+            <div><input class="btn btn-danger" id="submit" type="submit" value="返回" /></div>
+        </form>
+    </div>
+
+</body>
+
+<script type="text/javascript">
+    window.onload = function () {
+        
+        // 最大允许偏差
+        var maxBias = document.getElementById("maxBias");
+
+        // 偏差
+        var biaslist = document.getElementsByClassName("bias");
+
+        // 验证结果
+        var verifyresult = document.getElementById("verifyresult");
+
+        // js中，th通过.innerText获取元素的值，input框通过.value获取元素的值
+        for(let i=0; i<biaslist.length; i++){
+            if(parseFloat(biaslist[i].innerText) > parseFloat(maxBias.value)){
+                biaslist[i].style.color="red";
+                biaslist[i].style.fontWeight=700;
+                verifyresult.innerHTML="不通过!";
+                verifyresult.style.color= "red";
+                verifyresult.style.fontWeight=700
+            }    
+        }
+    }
+</script>
+{% endblock %}

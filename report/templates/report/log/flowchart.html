@@ -1,0 +1,271 @@
+{% extends "report/layout.html" %}  
+{% block content %}
+
+<style>
+    .Flowchart_Table{
+        table-layout: fixed;
+        /*table表格宽度固定，同时td内容过长也不会被撑开*/
+        word-break: break-all;
+        border-collapse: collapse;
+        /* 关键属性：合并表格内外边框(其实表格边框有2px，外面1px，里面还有1px) */
+        border: 2px solid #000;
+        border-left: none;
+        border-right: none;
+        width: 900px;
+        margin: 50px auto;
+        /*居中 */
+    }
+
+    .Flowchart_Table caption{
+        font-size: large;
+        font-weight: 900;
+        margin: 20px auto;
+    }
+
+    .Flowchart_Tabletr th{
+        /* 字体加粗居中 */
+        font-weight: bold;
+        font-family: Times New Roman, 宋体;
+        text-align: center;
+        /* 设置下边框 */
+        border: 2px solid #000;
+        border-left: none;
+        border-right: none;
+        font-weight: bold;
+    }
+
+    .Flowchart_Tabletr td{
+        text-align: center;
+    }
+
+    .Flowpicture{
+        font-size: large;
+        font-weight: 900;
+        margin: 0px auto;
+        text-align: center;
+    }
+
+    .Flowpicturebox{
+        width: 1000px;
+        text-align: center;
+        margin-left: 100px;
+    }
+
+    .box1,.box5{
+        width: 120px;
+        height: 120px;
+        background-color:silver;
+        float: left;
+        margin: 40px;
+    }
+
+    .box2,.box3,.box4{
+        width: 120px;
+        height: 120px;
+        background-color:silver;
+        float: left;
+        margin: 40px;
+    }
+
+    .box1,.box5{
+        border-radius: 50%;
+    }
+
+    .box2,.box3,.box4{
+        transform: rotate(45deg);    
+    }
+
+    .box2 span,.box3 span,.box4 span{
+        display: inline-block;
+        transform: rotate(-45deg);
+        font-weight: bold;
+    }
+
+    /* 修改文字位置 */
+    .box1 span,.box5 span{
+        display: inline-block;
+        margin-top: 50px;
+        font-weight: bold;
+    }
+
+    .box2 span{
+        display: inline-block;
+        margin-top: 45px;
+    }
+
+    .box3 span{
+        display: inline-block;
+        margin-top: 40px;
+    }
+
+    .box4 span{
+        display: inline-block;
+        margin-top: 40px;
+    }
+
+    .single1 {
+        width: 50px;
+        height: 5px;
+        position: relative;
+                top:119px;
+                left: 160px;
+        background-color: black;
+        /* transform: rotate(-40deg); */  /* 旋转角度 */
+    }
+
+    .single1::after {
+        content: '';
+        display: block;
+        position: absolute;
+        right: -8px;  /* 箭头位置 */
+        top: -6px;  /* 箭头位置 */
+        border-top: 8px solid transparent;  /* 箭头高低 */
+        border-bottom: 8px solid transparent; /* 箭头高低 */
+        border-left: 15px solid black; /* 箭头长度*/
+    }
+
+    .single2 {
+        width: 28px;
+        height: 5px;
+        position: relative;
+                top:114px;
+                left: 384px;
+        background-color: black;
+        /* transform: rotate(-40deg); */  /* 旋转角度 */
+    }
+
+    .single2::after {
+        content: '';
+        display: block;
+        position: absolute;
+        right: -2px;  /* 箭头位置 */
+        top: -6px;  /* 箭头位置 */
+        border-top: 8px solid transparent;  /* 箭头高低 */
+        border-bottom: 8px solid transparent; /* 箭头高低 */
+        border-left: 15px solid black; /* 箭头长度*/
+    }
+
+    .single3 {
+        width: 28px;
+        height: 5px;
+        position: relative;
+        top:109px;
+        left: 585px;
+        background-color: black;
+        /* transform: rotate(-40deg); */  /* 旋转角度 */
+    }
+
+    .single3::after {
+        content: '';
+        display: block;
+        position: absolute;
+        right: -2px;  /* 箭头位置 */
+        top: -6px;  /* 箭头位置 */
+        border-top: 8px solid transparent;  /* 箭头高低 */
+        border-bottom: 8px solid transparent; /* 箭头高低 */
+        border-left: 15px solid black; /* 箭头长度*/
+    }
+
+    .single4 {
+        width: 48px;
+        height: 5px;
+        position: relative;
+        top:103px;
+        left: 784px;
+        background-color: black;
+        /* transform: rotate(-40deg); */  /* 旋转角度 */
+    }
+
+    .single4::after {
+        content: '';
+        display: block;
+        position: absolute;
+        right: -8px;  /* 箭头位置 */
+        top: -6px;  /* 箭头位置 */
+        border-top: 8px solid transparent;  /* 箭头高低 */
+        border-bottom: 8px solid transparent; /* 箭头高低 */
+        border-left: 15px solid black; /* 箭头长度*/
+    }
+</style>
+
+{% load myfilter %}
+
+<table class="Flowchart_Table" cellpadding="6">
+    <caption>流程表单</caption>
+    <tr class="Flowchart_Tabletr">
+        <th>编号</th>
+        <th>操作</th>
+        <th>操作人</th>
+        <th>操作时间</th>
+        <th>接收人</th>
+    </tr>
+    {%for i in Fnumber %}
+        <tr class="Flowchart_Tabletr">
+            <td>{{i}}</td>
+            <td class="Foperation">{{Foperation|get_index:forloop.counter}}</td>
+            <td>{{Foperator|get_index:forloop.counter}}</td>
+            <td>{{Ftime|get_index:forloop.counter}}</td>
+            <td>{{Freceiver|get_index:forloop.counter}}</td>
+        </tr>
+    {% endfor %}   
+</table>
+
+
+<div class="Flowpicture">流程图</div>
+
+<div class="Flowpicturebox">
+    <div class="single1">
+    </div>
+    <div class="single2">
+    </div>
+    <div class="single3">
+    </div>
+    <div class="single4">
+    </div>
+    <div class="box1" id="box1">
+        <span>001-报告提交</span>
+    </div>
+    <div class="box2" id="box2">
+        <span>002-主管审核</span>
+    </div>
+    <div class="box3" id="box3">
+        <span>003-临床服务部<br/>分主任审核</span>
+    </div>
+    <div class="box4" id="box4">
+        <span>004-技术创新部<br/>主任审核</span>
+    </div>
+    <div class="box5" id="box5">
+        <span>005-归档</span>
+    </div>
+</div>
+
+<script>
+    window.onload = function(){
+        Foperationlist = document.getElementsByClassName("Foperation")
+        box1 = document.getElementById("box1")
+        box2 = document.getElementById("box2")
+        box3 = document.getElementById("box3")
+        box4 = document.getElementById("box4")
+        box5 = document.getElementById("box5")
+        for (var i = 0; i<Foperationlist.length; i++){
+                console.log(Foperationlist[i].innerHTML)
+                if(Foperationlist[i].innerHTML == "报告提交"){
+                    box1.style.backgroundColor = "#bfa"
+                }
+                else if(Foperationlist[i].innerHTML == "主管审核"){
+                    box2.style.backgroundColor = "#bfa"
+                }
+                else if(Foperationlist[i].innerHTML == "临床服务部分主任审核"){
+                    box3.style.backgroundColor = "#bfa"
+                }
+                else if(Foperationlist[i].innerHTML == "助理主任审核"){
+                    box4.style.backgroundColor = "#bfa"
+                    box5.style.backgroundColor = "#bfa"
+                }
+            }
+    }
+
+</script>
+
+{% endblock %}
+

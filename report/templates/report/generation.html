@@ -1,0 +1,191 @@
+{% extends "report/layout.html" %}  
+{% block content %}
+    <style>
+        .generation tr th{
+            text-align: center;
+        }
+
+        .generation tr td{
+            text-align: center;
+        }
+    </style>
+
+    <br>
+        <div class="col-md-12" align="center">
+            <table id="table_id_example" class="display generation">
+                <thead>
+                    <tr>
+                        <th>状态</th>
+                        <th>仪器编号</th>
+                        <th>检测平台</th>
+                        <th>项目</th>
+                        <th>初始验证时间</th>
+                        <th>操作</th>
+                        <th>流程表单</th>
+                        <th>操作日志</th>
+                    </tr>
+                </thead>
+
+                <!-- 依据不同等级显示不同的内容 -->
+                <!-- 依据不同用户等级显示不同的内容 -->
+                {% if level == "检验技术员" or level == "研发人员" %} 
+                    <tbody>
+                        {% for item in data %}
+                            <tr>
+                                {% if item.status == "未提交" %} 
+                                    <td style="color:gray;">{{item.status}}</td>
+                                {% elif item.status == "待审核" %}
+                                    <td style="color:red;">{{item.status}}</td>
+                                {% elif item.status == "主管已审核" or item.status == "分主任已审核" %}
+                                    <td style="color:orange;">审核中</td>
+                                {% else %}
+                                    <td style="color:green;">审核完成</td>
+                                {% endif %}
+                                <td>{{item.number}}</td>
+                                <td>{{item.Detectionplatform}}</td>
+                                <td>{{item.project }}</td>
+                                <td>{{item.verifytime|date:"Y年m月d日" }}</td>  <!--格式化日期，方便用datatables排序-->
+                                <td>
+                                    <span><a href="{% url 'verifyagain' item.id %}">新建</a></span>
+                                    <span>|</span>             
+                                    <span><a href="{% url 'report' item.id 'preview' %}">预览</a></span>
+                                    <span>|</span>
+                                    <span style="color:gray;">编辑</span>
+                                    <span>|</span>
+                                    <span style="color:gray;">审核</span>
+                                    <span>|</span>
+                                    <span style="color:gray;">删除</span>
+                                </td>
+                                <td>
+                                    <span style="color:gray;">流程表单</span>
+                                </td>
+                                <td>
+                                    <span style="color:gray;">操作日志</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>  
+                
+                {% elif level == "组长" %} 
+                    <tbody>
+                        {% for item in data %}
+                            <tr>
+                                {% if item.status == "未提交" %} 
+                                    <td style="color:gray;">{{item.status}}</td>
+                                {% elif item.status == "待审核" %}
+                                    <td style="color:red;">{{item.status}}</td>
+                                {% elif item.status == "主管已审核" or item.status == "分主任已审核" %}
+                                    <td style="color:orange;">审核中</td>
+                                {% else %}
+                                    <td style="color:green;">审核完成</td>
+                                {% endif %}
+                                <td>{{item.number}}</td>
+                                <td>{{item.Detectionplatform}}</td>
+                                <td>{{item.project }}</td>
+                                <td>{{item.verifytime|date:"Y年m月d日" }}</td>  <!--格式化日期，方便用datatables排序-->
+                                <td>
+                                    <span><a href="{% url 'verifyagain' item.id %}">新建</a></span>
+                                    <span>|</span>
+                                    <span><a href="{% url 'report' item.id 'preview' %}">预览</a></span>
+                                    <span>|</span>
+                                    <span style="color:gray;">编辑</span>
+                                    <span>|</span>
+                                    <span style="color:gray;">审核</span>
+                                    <span>|</span>
+                                    <span><a href="{% url 'report' item.id 'delete' %}">删除</a></span>
+                                </td>
+                                <td>
+                                    <span style="color:gray;">流程表单</span>
+                                </td>
+                                <td>
+                                    <span style="color:gray;">操作日志</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>  
+
+                {% else %}
+                    <tbody>
+                        {% for item in data %}
+                            <tr>
+                                {% if item.status == "未提交" %} 
+                                    <td style="color:gray;">{{item.status}}</td>
+                                {% elif item.status == "待审核" %}
+                                    <td style="color:red;">{{item.status}}</td>
+                                {% elif item.status == "主管已审核" or item.status == "分主任已审核" %}
+                                    <td style="color:orange;">审核中</td>
+                                {% else %}
+                                    <td style="color:green;">审核完成</td>
+                                {% endif %}
+                                <td>{{item.number}}</td>
+                                <td>{{item.Detectionplatform}}</td>
+                                <td>{{item.project }}</td>
+                                <td>{{item.verifytime|date:"Y年m月d日" }}</td>  <!--格式化日期，方便用datatables排序-->
+                                <td>
+                                    <span><a href="{% url 'verifyagain' item.id %}">新建</a></span>
+                                    <span>|</span>
+                                    <span><a href="{% url 'report' item.id 'preview' %}">预览</a></span>
+                                    <span>|</span>
+                                    <span><a href="{% url 'report' item.id 'edit' %}">编辑</a></span>
+                                    <span>|</span>
+                                    {% if item.status == "未提交" %} 
+                                        <span style="color:gray;">审核</span>
+                                    {% else %}
+                                        <span><a href="{% url 'report' item.id 'check' %}">审核</a></span>
+                                    {% endif %}
+                                    <span>|</span>
+                                    <span><a href="{% url 'report' item.id 'delete' %}">删除</a></span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'flowchart' item.id %}">流程表单</a>
+                                </td>
+                                <td>
+                                    <a href="{% url 'operatelog' item.id %}">操作日志</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>  
+                {% endif %} 
+  
+            </table>
+        </div> 
+
+    <script>
+        $(document).ready( function () {
+            $('#table_id_example').DataTable(
+                {   
+                    paging:true,
+                    lengthChange:true,
+                    orderMulti:true,
+                    info:true,
+                    autoWidth:true,
+                    responsive:true,
+                    processing:true,
+                    stateSave:true,
+                    deferRender:true,
+                    ordering : true,
+                    language: {
+                        "emptyTable": "没有数据", //没有数据时要显示的字符串
+                        "info": "当前 _START_ 条到 _END_ 条 共 _TOTAL_ 条",//左下角的信息，变量可以自定义，到官网详细查看
+                        "infoEmpty": "无记录",//当没有数据时，左下角的信息
+                        "infoFiltered": "(从 _MAX_ 条记录过滤)",//当表格过滤的时候，将此字符串附加到主要信息
+                        "infoPostFix": "",//在摘要信息后继续追加的字符串
+                        "thousands": ",",//千分位分隔符
+                        "lengthMenu": "每页 _MENU_ 条记录",//用来描述分页长度选项的字符串
+                        "loadingRecords": "加载中...",//用来描述数据在加载中等待的提示字符串 - 当异步读取数据的时候显示
+                        "processing": "处理中...",//用来描述加载进度的字符串
+                        "search": "搜索：",//用来描述搜索输入框的字符串
+                        "zeroRecords": "没有找到",//当没有搜索到结果时，显示
+                        "paginate": {
+                            "first": "首页",
+                            "previous": "上一页",
+                            "next": "下一页",
+                            "last": "尾页"}               
+                    }
+                }
+            );    
+        } );
+    </script>
+
+
+    {% endblock %}

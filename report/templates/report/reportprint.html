@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrintDemo</title>
+    <script src="{% static 'report/content/paged.polyfill.js' %}"></script>
+
+
+    <style>
+        /* 一 封面 */
+
+        .covertr,
+        .covertd {
+            /* 设置固定高度，保证封面打印时独占第一页 */
+            display: block;
+            height: 920px;
+            /* background-color: #bfa; */
+        }
+
+        /* 中英文大标题 */
+
+        .Cover_englishtitle_big,
+        .Cover_chinesetitle_big {
+            font-size: 24px;
+            font-weight: bold;
+            font-family: Times New Roman, 宋体;
+            text-align: center;
+            line-height: 90px;
+        }
+
+        .Cover_englishtitle_big {
+            margin-top: 20px;
+        }
+
+        /*中英文小标题*/
+
+        .Cover_englishtitle_small,
+        .Cover_chinesetitle_small {
+            font-size: 18.6px;
+            font-weight: bold;
+            font-family: Times New Roman, 宋体;
+            text-align: center;
+            line-height: 90px;
+        }
+
+        /* 仪器编号，仪器型号，色谱柱 */
+
+        .Cover_instrumentnumber,
+        .Cover_instrumentmodel,
+        .Cover_column {
+            font-size: 18.6px;
+            font-weight: bold;
+            font-family: Times New Roman, 宋体;
+            text-align: center;
+            line-height: 50px;
+        }
+
+        .Cover_column {
+            margin-bottom: 30px;
+        }
+
+        /*ProtocolID，代码*/
+
+        .Cover_ProtocolID,
+        .Cover_code {
+            font-size: 20px;
+            font-weight: bold;
+            font-family: Times New Roman, 宋体;
+            text-align: center;
+            line-height: 70px;
+        }
+
+        html,
+        body {
+            font-size: 15px;
+        }
+
+        body {
+            margin: 0;
+            -webkit-print-color-adjust: exact;
+        }
+
+        @page {
+            size: A4;
+            margin-top: 20mm;
+            margin-bottom: 20mm;
+            margin-left: 20mm;
+            margin-right: 20mm;
+        }
+
+        @page {
+            padding-top: 2rem;
+
+            @top-center {
+                content: element(title);
+            }
+
+            @top-right {
+                color: white;
+                content: "第 " counter(page) " 頁，共 " counter(pages) " 頁";
+            }
+
+            @bottom-left {
+                content: element(footer);
+            }
+        }
+
+        @page: nth(1) {
+            padding-top: 2rem;
+
+            @top-center {
+                content: element(title);
+            }
+
+            @top-right {
+                color: white;
+                content: "第 " counter(page) " 頁，共 " counter(pages) " 頁";
+            }
+
+            @bottom-left {
+                content: element(footer);
+            }
+        }
+
+        .pagedjs_page:not([data-page-number="1"]) .pagedjs_margin-top-left-corner-holder,
+        .pagedjs_page:not([data-page-number="1"]) .pagedjs_margin-top,
+        .pagedjs_page:not([data-page-number="1"]) .pagedjs_margin-top-right-corner-holder {
+            background: #658db4;
+            outline: 2px #658db4;
+        }
+
+        .cover {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .title {
+            position: running(title);
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .footer {
+            position: running(footer);
+            font-size: 1rem;
+            color: #999;
+            border-top: 2px solid #ccc;
+        }
+
+        .row {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+        }
+
+        .col {
+            margin-left: 2rem;
+        }
+
+        /* .avoid-break {
+            page-break-before: always;
+        }
+
+        .force-break {
+            page-break-before: always;
+        } */
+
+        .section+.section {
+            margin-top: 4rem;
+        }
+
+        table {
+            text-align: center;
+            border-collapse: collapse;
+            margin-top: 2.5rem;
+            width: 100%;
+            font-size: 1.1em;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ccc;
+        }
+
+        td,
+        th {
+            padding: 1em;
+        }
+
+        .chapter {
+            break-before: page;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="section avoid-break">
+        <!--英文大标题-->
+        <div class="Cover_englishtitle_big">VALIDATION PROTOCOL AND REPORT</div>
+
+        <!--中文大标题-->
+        <div class="Cover_chinesetitle_big">方法验证报告</div>
+
+        <!--英文小标题-->
+
+        <div class="Cover_englishtitle_small">Validation of Imatinib in Plasma by LC-MS/MS</div>
+
+
+        <!-- 中文小标题 -->
+
+        <div class="Cover_chinesetitle_small">使用LC-MS/MS检测血浆中伊马替尼的方法验证报告</div>
+
+
+        <!-- 仪器编号，仪器型号，色谱柱 -->
+        <div class="Cover_instrumentnumber">仪器编号：FXS-YZ20</div>
+        <div class="Cover_instrumentmodel">仪器型号：AB SCIEX API 3200MD LC-MS/MS</div>
+
+        <div class="Cover_chinesetitle_small">色谱柱：Phenomenex Kinetex™ 2.6 µ XB-C18 100 Å, 50×2.1 mm</div>
+
+
+        <!-- Protocol ID，代码 -->
+        <div class="Cover_ProtocolID">Protocol ID: LC-MS/MS202207</div>
+        <div class="Cover_code">代码： LC-MS/MS202207</div>
+    </div>
+
+    <div class="section avoid-break chapter" id="report1">
+        <div class="title">
+            報告總覽
+        </div>
+        <div class="footer">
+            <p>本文件僅供教學使用，請勿用於商業之用途</p>
+        </div>
+        <h3>網站調查報告 #1</h3>
+        <p>blog.huli.tw</p>
+        <div>
+            <div>
+                <h4>作者介紹</h4>
+                <p>重度拖延症患者，興趣是光想不做，有很多想做的事，卻一件都沒有執行。無聊的時候喜歡寫寫文章，發現自己好像有把事情講得比其他人清楚的能力，相信分享與交流可以讓世界更美好。</p>
+            </div>
+            <div>
+                <h4>網站內容</h4>
+                <p>此部落格採用 Hexo + Minos theme + GitHub Pages 架設而成。有改過 Minos
+                    裡面的一些東西，例如說字體大小、文章列表以及分類頁面等等。這邊是跟技術比較相關的文章，其他文章會放在我的
+                    Medium，哪天如果 Medium 不幸倒掉，會把文章都搬過來這邊。
+
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section avoid-break" id="report2">
+        <div class="title">
+            報告總覽
+        </div>
+        <div class="footer">
+            <p>本文件僅供教學使用，請勿用於商業之用途</p>
+        </div>
+        <h3>網站調查報告 #1</h3>
+        <p>blog.huli.tw</p>
+        <div>
+            <div>
+                <h4>作者介紹</h4>
+                <p>重度拖延症患者，興趣是光想不做，有很多想做的事，卻一件都沒有執行。無聊的時候喜歡寫寫文章，發現自己好像有把事情講得比其他人清楚的能力，相信分享與交流可以讓世界更美好。</p>
+            </div>
+            <div>
+                <h4>網站內容</h4>
+                <p>此部落格採用 Hexo + Minos theme + GitHub Pages 架設而成。有改過 Minos
+                    裡面的一些東西，例如說字體大小、文章列表以及分類頁面等等。這邊是跟技術比較相關的文章，其他文章會放在我的
+                    Medium，哪天如果 Medium 不幸倒掉，會把文章都搬過來這邊。
+
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section chapter" id="report3">
+        <div class="title">
+            報告總覽
+        </div>
+        <div class="footer">
+            <p>本文件僅供教學使用，請勿用於商業之用途</p>
+        </div>
+        <h3>網站調查報告 #1</h3>
+        <p>blog.huli.tw</p>
+        <div>
+            <div>
+                <h4>作者介紹</h4>
+                <p>重度拖延症患者，興趣是光想不做，有很多想做的事，卻一件都沒有執行。無聊的時候喜歡寫寫文章，發現自己好像有把事情講得比其他人清楚的能力，相信分享與交流可以讓世界更美好。</p>
+            </div>
+            <div>
+                <h4>網站內容</h4>
+                <p>此部落格採用 Hexo + Minos theme + GitHub Pages 架設而成。有改過 Minos
+                    裡面的一些東西，例如說字體大小、文章列表以及分類頁面等等。這邊是跟技術比較相關的文章，其他文章會放在我的
+                    Medium，哪天如果 Medium 不幸倒掉，會把文章都搬過來這邊。
+
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <table class="LOQ_Table" cellpadding="4">
+            <caption>表7.IMA线性范围实验数据</caption>
+            <tr>
+                <th>浓度序号</th>
+                <th>理论浓度<br />(ng/mL)</th>
+                <th>检测值<br />(ng/mL)</th>
+                <th>回收率<br />(%)</th>
+                <th>平均回收率<br />(%)</th>
+                <th>检测值CV<br />(%)</th>
+            </tr>
+
+            <tr>
+                <td rowspan="6">AMR-S1</td>
+                <td rowspan="6">156.7</td>
+                <td>145.9</td>
+                <td>93.13</td>
+                <td rowspan="6">95.33</td>
+                <td rowspan="6">3.15</td>
+            </tr>
+            <tr>
+                <td>148.0</td>
+                <td>94.43</td>
+            </tr>
+            <tr>
+                <td>143.1</td>
+                <td>91.30</td>
+            </tr>
+            <tr>
+                <td>152.3</td>
+                <td>97.18</td>
+            </tr>
+            <tr>
+                <td>156.2</td>
+                <td>99.66</td>
+            </tr>
+            <tr>
+                <td>150.9</td>
+                <td>96.28</td>
+            </tr>
+
+            <tr class="chapter">
+                <td rowspan="6">AMR-S2</td>
+                <td rowspan="6">313.4</td>
+                <td>301.9</td>
+                <td>96.33</td>
+                <td rowspan="6">100.66</td>
+                <td rowspan="6">3.39</td>
+            </tr>
+            <tr>
+                <td>307.7</td>
+                <td>98.19</td>
+            </tr>
+            <tr>
+                <td>312.9</td>
+                <td>99.84</td>
+            </tr>
+            <tr>
+                <td>315.0</td>
+                <td>100.51</td>
+            </tr>
+            <tr>
+                <td>331.2</td>
+                <td>105.69</td>
+            </tr>
+            <tr>
+                <td>324.1</td>
+                <td>103.40</td>
+            </tr>
+
+            <tr>
+                <td rowspan="6">AMR-S3</td>
+                <td rowspan="6">626.9</td>
+                <td>634.6</td>
+                <td>101.23</td>
+                <td rowspan="6">103.94</td>
+                <td rowspan="6">3.58</td>
+            </tr>
+            <tr>
+                <td>647.1</td>
+                <td>103.23</td>
+            </tr>
+            <tr>
+                <td>651.7</td>
+                <td>103.96</td>
+            </tr>
+            <tr>
+                <td>620.0</td>
+                <td>98.89</td>
+            </tr>
+            <tr>
+                <td>679.6</td>
+                <td>108.40</td>
+            </tr>
+            <tr>
+                <td>676.7</td>
+                <td>107.95</td>
+            </tr>
+
+            <tr class="chapter">
+                <td rowspan="6">AMR-S4</td>
+                <td rowspan="6">1254</td>
+                <td>1239</td>
+                <td>98.84</td>
+                <td rowspan="6">101.68</td>
+                <td rowspan="6">3.50</td>
+            </tr>
+            <tr>
+                <td>1225</td>
+                <td>97.69</td>
+            </tr>
+            <tr>
+                <td>1269</td>
+                <td>101.17</td>
+            </tr>
+            <tr>
+                <td>1261</td>
+                <td>100.52</td>
+            </tr>
+            <tr class="LOQ_Tabletr">
+                <td>1315</td>
+                <td>104.88</td>
+            </tr>
+            <tr class="LOQ_Tabletr">
+                <td>1341</td>
+                <td>106.97</td>
+            </tr>
+
+            <tr class="LOQ_Tabletr">
+                <td rowspan="6">AMR-S5</td>
+                <td rowspan="6">2508</td>
+                <td>2398</td>
+                <td>95.60</td>
+                <td rowspan="6">98.38</td>
+                <td rowspan="6">2.52</td>
+            </tr>
+            <tr class="LOQ_Tabletr">
+                <td>2451</td>
+                <td>97.72</td>
+            </tr>
+            <tr class="LOQ_Tabletr">
+                <td>2513</td>
+                <td>100.21</td>
+            </tr>
+            <tr class="LOQ_Tabletr">
+                <td>2406</td>
+                <td>95.93</td>
+            </tr>
+            <tr class="LOQ_Tabletr">
+                <td>2558</td>
+                <td>101.98</td>
+            </tr>
+            <tr class="LOQ_Tabletr">
+                <td>2480</td>
+                <td>98.87</td>
+            </tr>
+
+        </table>
+    </div>
+</body>
+
+</html>
+
+<script>
+    var report1 = document.getElementById('report1');
+    console.log(report1.offsetHeight)
+
+    var report2 = document.getElementById('report2');
+    console.log(report2.offsetHeight)
+
+    var report3 = document.getElementById('report3');
+    console.log(report3.offsetHeight)
+
+    console.log(window.screen.height)
+</script>
