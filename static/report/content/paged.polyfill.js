@@ -694,25 +694,25 @@
 		return before;
 	}
 
-	function displayedElementAfter(node, limiter) {
-		let after = elementAfter(node, limiter);
+	// function displayedElementAfter(node, limiter) {
+	// 	let after = elementAfter(node, limiter);
 
-		while (after && after.dataset.undisplayed) {
-			after = elementAfter(after, limiter);
-		}
+	// 	while (after && after.dataset.undisplayed) {
+	// 		after = elementAfter(after, limiter);
+	// 	}
 
-		return after;
-	}
+	// 	return after;
+	// }
 
-	function displayedElementBefore(node, limiter) {
-		let before = elementBefore(node, limiter);
+	// function displayedElementBefore(node, limiter) {
+	// 	let before = elementBefore(node, limiter);
 
-		while (before && before.dataset.undisplayed) {
-			before = elementBefore(before, limiter);
-		}
+	// 	while (before && before.dataset.undisplayed) {
+	// 		before = elementBefore(before, limiter);
+	// 	}
 
-		return before;
-	}
+	// 	return before;
+	// }
 
 	function rebuildAncestors(node) {
 		let parent, ancestor;
@@ -892,29 +892,29 @@
 		return false;
 	}
 
-	function needsPageBreak(node, previousSignificantNode) {
-		if (typeof node === "undefined" || !previousSignificantNode || isIgnorable(node)) {
-			return false;
-		}
-		if (node.dataset && node.dataset.undisplayed) {
-			return false;
-		}
-		let previousSignificantNodePage = previousSignificantNode.dataset ? previousSignificantNode.dataset.page : undefined;
-		if (typeof previousSignificantNodePage === "undefined") {
-			const nodeWithNamedPage = getNodeWithNamedPage(previousSignificantNode);
-			if (nodeWithNamedPage) {
-				previousSignificantNodePage = nodeWithNamedPage.dataset.page;
-			}
-		}
-		let currentNodePage = node.dataset ? node.dataset.page : undefined;
-		if (typeof currentNodePage === "undefined") {
-			const nodeWithNamedPage = getNodeWithNamedPage(node, previousSignificantNode);
-			if (nodeWithNamedPage) {
-				currentNodePage = nodeWithNamedPage.dataset.page;
-			}
-		}
-		return currentNodePage !== previousSignificantNodePage;
-	}
+	// function needsPageBreak(node, previousSignificantNode) {
+	// 	if (typeof node === "undefined" || !previousSignificantNode || isIgnorable(node)) {
+	// 		return false;
+	// 	}
+	// 	if (node.dataset && node.dataset.undisplayed) {
+	// 		return false;
+	// 	}
+	// 	let previousSignificantNodePage = previousSignificantNode.dataset ? previousSignificantNode.dataset.page : undefined;
+	// 	if (typeof previousSignificantNodePage === "undefined") {
+	// 		const nodeWithNamedPage = getNodeWithNamedPage(previousSignificantNode);
+	// 		if (nodeWithNamedPage) {
+	// 			previousSignificantNodePage = nodeWithNamedPage.dataset.page;
+	// 		}
+	// 	}
+	// 	let currentNodePage = node.dataset ? node.dataset.page : undefined;
+	// 	if (typeof currentNodePage === "undefined") {
+	// 		const nodeWithNamedPage = getNodeWithNamedPage(node, previousSignificantNode);
+	// 		if (nodeWithNamedPage) {
+	// 			currentNodePage = nodeWithNamedPage.dataset.page;
+	// 		}
+	// 	}
+	// 	return currentNodePage !== previousSignificantNodePage;
+	// }
 
 	function *words(node) {
 		let currentText = node.nodeValue;
@@ -31868,12 +31868,12 @@
 						}
 
 						// force redraw
-						let el = document.querySelector(`[data-${target.variable}="${selector}"]`);
-						if (el) {
-							el.style.display = "none";
-							el.clientHeight;
-							el.style.removeProperty("display");
-						}
+						// let el = document.querySelector(`[data-${target.variable}="${selector}"]`);
+						// if (el) {
+						// 	el.style.display = "none";
+						// 	el.clientHeight;
+						// 	el.style.removeProperty("display");
+						// }
 					}
 				});
 			});
@@ -32228,105 +32228,105 @@
 	};
 	}(clearCut));
 
-	class UndisplayedFilter extends Handler {
-		constructor(chunker, polisher, caller) {
-			super(chunker, polisher, caller);
-			this.displayRules = {};
-		}
+	// class UndisplayedFilter extends Handler {
+	// 	constructor(chunker, polisher, caller) {
+	// 		super(chunker, polisher, caller);
+	// 		this.displayRules = {};
+	// 	}
 
-		onDeclaration(declaration, dItem, dList, rule) {
-			if (declaration.property === "display") {
-				let selector = lib.generate(rule.ruleNode.prelude);
-				let value = declaration.value.children.first().name;
+	// 	onDeclaration(declaration, dItem, dList, rule) {
+	// 		if (declaration.property === "display") {
+	// 			let selector = lib.generate(rule.ruleNode.prelude);
+	// 			let value = declaration.value.children.first().name;
 
-				selector.split(",").forEach((s) => {
-					this.displayRules[s] = {
-						value: value,
-						selector: s,
-						specificity: clearCut.calculateSpecificity(s),
-						important: declaration.important
-					};
-				});
-			}
-		}
+	// 			selector.split(",").forEach((s) => {
+	// 				this.displayRules[s] = {
+	// 					value: value,
+	// 					selector: s,
+	// 					specificity: clearCut.calculateSpecificity(s),
+	// 					important: declaration.important
+	// 				};
+	// 			});
+	// 		}
+	// 	}
 
-		filter(content) {
-			let { matches, selectors } = this.sortDisplayedSelectors(content, this.displayRules);
+	// 	filter(content) {
+	// 		let { matches, selectors } = this.sortDisplayedSelectors(content, this.displayRules);
 
-			// Find matching elements that have display styles
-			for (let i = 0; i < matches.length; i++) {
-				let element = matches[i];
-				let selector = selectors[i];
-				let displayValue = selector[selector.length-1].value;
-				if(this.removable(element) && displayValue === "none") {
-					element.dataset.undisplayed = "undisplayed";
-				}
-			}
+	// 		// Find matching elements that have display styles
+	// 		for (let i = 0; i < matches.length; i++) {
+	// 			let element = matches[i];
+	// 			let selector = selectors[i];
+	// 			let displayValue = selector[selector.length-1].value;
+	// 			if(this.removable(element) && displayValue === "none") {
+	// 				// element.dataset.undisplayed = "undisplayed";
+	// 			}
+	// 		}
 
-			// Find elements that have inline styles
-			let styledElements = content.querySelectorAll("[style]");
-			for (let i = 0; i < styledElements.length; i++) {
-				let element = styledElements[i];
-				if (this.removable(element)) {
-					element.dataset.undisplayed = "undisplayed";
-				}
-			}
-		}
+	// 		// Find elements that have inline styles
+	// 		let styledElements = content.querySelectorAll("[style]");
+	// 		for (let i = 0; i < styledElements.length; i++) {
+	// 			let element = styledElements[i];
+	// 			if (this.removable(element)) {
+	// 				// element.dataset.undisplayed = "undisplayed";
+	// 			}
+	// 		}
+	// 	}
 
-		sorter(a, b) {
-			if (a.important && !b.important) {
-				return 1;
-			}
+	// 	sorter(a, b) {
+	// 		if (a.important && !b.important) {
+	// 			return 1;
+	// 		}
 
-			if (b.important && !a.important) {
-				return -1;
-			}
+	// 		if (b.important && !a.important) {
+	// 			return -1;
+	// 		}
 
-			return a.specificity - b.specificity;
-		}
+	// 		return a.specificity - b.specificity;
+	// 	}
 
-		sortDisplayedSelectors(content, displayRules=[]) {
-			let matches = [];
-			let selectors = [];
-			for (let d in displayRules) {
-				let displayItem = displayRules[d];
-				let selector = displayItem.selector;
-				let query = [];
-				try {
-					try {
-						query = content.querySelectorAll(selector);
-					} catch (e) {
-						query = content.querySelectorAll(cleanSelector(selector));
-					}
-				} catch (e) {
-					query = [];
-				}
-				let elements = Array.from(query);
-				for (let e of elements) {
-					if (matches.includes(e)) {
-						let index = matches.indexOf(e);
-						selectors[index].push(displayItem);
-						selectors[index] = selectors[index].sort(this.sorter);
-					} else {
-						matches.push(e);
-						selectors.push([displayItem]);
-					}
-				}
-			}
+	// 	sortDisplayedSelectors(content, displayRules=[]) {
+	// 		let matches = [];
+	// 		let selectors = [];
+	// 		for (let d in displayRules) {
+	// 			let displayItem = displayRules[d];
+	// 			let selector = displayItem.selector;
+	// 			let query = [];
+	// 			try {
+	// 				try {
+	// 					query = content.querySelectorAll(selector);
+	// 				} catch (e) {
+	// 					query = content.querySelectorAll(cleanSelector(selector));
+	// 				}
+	// 			} catch (e) {
+	// 				query = [];
+	// 			}
+	// 			let elements = Array.from(query);
+	// 			for (let e of elements) {
+	// 				if (matches.includes(e)) {
+	// 					let index = matches.indexOf(e);
+	// 					selectors[index].push(displayItem);
+	// 					selectors[index] = selectors[index].sort(this.sorter);
+	// 				} else {
+	// 					matches.push(e);
+	// 					selectors.push([displayItem]);
+	// 				}
+	// 			}
+	// 		}
 
-			return { matches, selectors };
-		}
+	// 		return { matches, selectors };
+	// 	}
 
-		removable(element) {
-			if (element.style &&
-					element.style.display !== "" &&
-					element.style.display !== "none") {
-				return false;
-			}
+	// 	removable(element) {
+	// 		if (element.style &&
+	// 				element.style.display !== "" &&
+	// 				element.style.display !== "none") {
+	// 			return false;
+	// 		}
 
-			return true;
-		}
-	}
+	// 		return true;
+	// 	}
+	// }
 
 	var filters = [
 		WhiteSpaceFilter,

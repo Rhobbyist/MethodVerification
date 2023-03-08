@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--百度统计-->
+<script>
+    var _hmt = _hmt || [];
+    (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?b94bd2699a7baf9292dd9cf571f7fbb9";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+<head>
+    <meta charset="utf-8">
+    {% load static %}
+    <meta name="referrer" content="same-origin" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="" />
+    <meta name="description" content="">
+    <meta name="author" content="刘畅">
+
+    <title>
+        方法学性能验证管理系统
+    </title>
+
+    <link href="{% static 'report/instructions/bootstrap4.min.css' %}" rel="stylesheet">
+    <link href="{% static 'report/instructions/font-awesome.css' %}" rel="stylesheet">
+
+    <link rel="shortcut icon" href="./favicon.ico">
+    <link href="{% static 'report/instructions/main.css' %}" rel="stylesheet">
+    <link href="{% static 'report/instructions/vs.css' %}" rel="stylesheet">
+
+    <style>
+        .container{
+            margin-left: 300px;
+        }
+
+        .row{
+            width: 1200px;
+        }
+    </style>
+
+
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light " id="top_nav">
+            <a class="navbar-brand" href="/">方法学性能验证管理系统 - 使用说明(开发中)</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#top_bar"
+                aria-controls="top_bar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </nav>
+    </div>
+    <div class="container" style="margin-top:5rem;">
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <!-- 左侧目录栏 -->
+            <div class="col-md-3">
+                <div class="navbar-sider " id="sidebar">
+                    <a href="/course/django/2" class="list-group-item active"><b>文档说明</b></a>
+                    <a style="margin-left: 1.5em" href="./Instruction/1.html" class="list-group-item">第一章：准备工作</a>
+                    <a style="margin-left: 1.5em" href="./Instruction/1.html" class="list-group-item">第二章：后台管理系统</a>
+                    <a style="margin-left: 1.5em" href="/course/django/86" class="list-group-item">第三章：项目验证</a>
+                    <a style="margin-left: 3em" href="/course/django/87" class="list-group-item">Part 1：验证界面简介</a>
+                    <a style="margin-left: 3em" href="/course/django/88" class="list-group-item">Part 2：精密度验证</a>
+                    <a style="margin-left: 3em" href="/course/django/89" class="list-group-item">Part 3：正确度验证</a>
+                    <a style="margin-left: 3em" href="/course/django/90" class="list-group-item">Part 4：分析灵敏度与分析测量范围（AMR）验证</a>
+                    <a style="margin-left: 3em" href="/course/django/91" class="list-group-item">Part 5：临床可报告范围验证</a>
+                    <a style="margin-left: 3em" href="/course/django/92" class="list-group-item">Part 6：基质特异性验证</a>
+                    <a style="margin-left: 3em" href="/course/django/93" class="list-group-item">Part 7：基质效应验证</a>
+                    <a style="margin-left: 3em" href="/course/django/95" class="list-group-item">Part 8：携带效应验证</a>
+                    <a style="margin-left: 3em" href="/course/django/96" class="list-group-item">Part 9：样品稳定性验证</a>
+                    <a style="margin-left: 3em" href="/course/django/97" class="list-group-item">Part 10：参考区间验证</a>
+                    <a style="margin-left: 1.5em" href="/course/django/86" class="list-group-item">第四章：报告审批</a>
+
+                </div>
+            </div>
+            <!-- 左侧目录栏 结束 -->
+
+
+            <!-- 右侧正文栏 -->
+            <div class="col-md-9">
+                <!-- 教程正文主体部分 -->
+                <h1>文档说明（2023.01.09更新）</h1>
+                <p>本文档主要对“方法学性能验证管理系统（以下简称系统）”中的各项功能做一个详细的图文介绍，用户可通过左侧导航栏快速定位到需要查找的功能模块.如系统有新增功能，本文档会相应的进行实时更新。
+                </p>
+                <hr />
+
+                <!-- 教程导航条 -->
+                <div>
+
+                    <a href="#"><i class="fa fa-arrow-left"></i>&nbsp;前面没有了....</a>
+
+
+
+                    <a class="float-right" href="/course/django/84">
+                        第一章：准备工作&nbsp;<i class="fa fa-arrow-right"></i></a>
+
+                </div>
+                <!-- 教程导航条结束 -->
+                <hr />
+
+
+            </div>
+        </div>
+
+    </div>
+
+    <script src="{% static 'report/instructions/jquery.js' %}"></script>
+    <script src="{% static 'report/instructions/bootstrap4.min.js' %}"></script>
+
+
+
+    <!--让左边目录栏跟随滚动  2019-9-25取消此功能-->
+</body>
+
+</html>

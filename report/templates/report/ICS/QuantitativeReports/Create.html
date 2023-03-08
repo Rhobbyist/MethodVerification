@@ -1,0 +1,61 @@
+{% extends "report/ICS/index.html" %}
+{% block content %}
+
+<style>
+    select {
+        width: 200px;
+        height: 50px;
+    }
+
+    .form-group{
+        width: 350px;
+        height: 80px;
+    }
+
+    input{
+        width: 300px;
+    }
+</style>
+
+<div class="container">
+    <form action="{% url 'ICS_QuantitativeReports_Edit' %}" method="POST" enctype="multipart/form-data">
+        <main role="main" class="pb-3">
+            <div class="col-md">
+                <br>
+                <form role="form">
+                    <div class="form-group">
+                        <label for="name">比对项目</label>
+                        <select class="form-control" name="project">
+                            {% for item in data %}
+                                <option>{{item.project}}</option>
+                            {% endfor %}
+                        </select>
+                </form>
+            </div>
+
+            <div class="form-group">
+                <label for="usr">靶仪器编号</label>
+                <input type="text" class="form-control" id="usr" name="target">
+            </div>
+
+            <div class="form-group">
+                <label for="usr">比对仪器编号</label>
+                <input type="text" class="form-control" id="usr" name="compare">
+            </div>
+
+            <div>
+                仪器数据
+                <a download="仪器比对上传模版.csv" href="/static/report/csv/仪器比对上传模板.csv">(模板下载)</a>
+            </div>
+            <br>
+            <div><input type="file" name="fileuploads" accept=".csv"></div>
+            <br>
+            <div><input type="submit" value="提交" class="btn btn-primary" /></div>
+            <br>
+            <div>建议同时将仪器数据导入Medcalc中进行计算，与本程序计算的结果（回归方程、置信区间）进行比对，如有不一致的情况请及时告知，谢谢！</div>
+        </main>
+    </form>   
+</div>
+
+
+{% endblock %}

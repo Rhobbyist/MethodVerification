@@ -2,13 +2,18 @@ from re import *
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from numpy import number
+from numpy import *
 from report import models
 from .forms import UploadFileForm
 from report import jmd, zqd, amr, crr, ms, Carry_over, Matrix_effect, Sample_Stability,Sample_ReferenceInterval,QC,others
 from .models import *
 import time
 import re
+from datetime import datetime
+from itertools import combinations,permutations
+from scipy.stats import norm
+import math
+from report.effectnum import *
 
 # 认证模块
 from django.contrib import auth
@@ -122,6 +127,7 @@ def get_verification_page(request):
             return render(request, 'report/project/QC.html', locals())
 
         else:
+            print(request.POST)
             # 一 接收验证界面传过来的数据
             instrument_num = request.POST["instrument_num"].strip() # 仪器编号,strip()的作用是去除前后空格
             Detectionplatform = request.POST["Detectionplatform"]  # 检测平台
@@ -129,6 +135,12 @@ def get_verification_page(request):
             platform = request.POST["platform"]  # 仪器平台(液质,液相,ICP-MS...)       
             manufacturers = request.POST["manufacturers"] # 仪器厂家(AB,Agilent...)
             verifyoccasion = request.POST["verifyoccasion"]  # 验证时机
+
+            # 单击新建按钮才有id
+            try:
+                id = request.POST["id"]
+            except:
+                id = ""
             # verifyoccasiontexts = request.POST["verifyoccasiontexts"] #自定义验证时机
             # verifytime = time.strftime('%Y-%m-%d', time.localtime(time.time()))  # 初始验证时间
 
@@ -137,13 +149,51 @@ def get_verification_page(request):
             digits = Special.objects.get(project=project).Effective_digits  # 有效位数
             Number_of_compounds = Special.objects.get(project=project).Number_of_compounds  # 化合物个数
 
-            # 三 判断此份报告是否已被创建
-            if ReportInfo.objects.filter(number=instrument_num, project=project):
-                reportinfo = ReportInfo.objects.get(number=instrument_num,Detectionplatform=Detectionplatform,project=project,
-                platform=platform,manufacturers=manufacturers)
+            # 三 判断此份报告是否已被创建,时间差>=100代表不是同一份报告
+
+            # 第一种情况：单击新建按钮，无需新建报告。直接关联现有报告
+            if id:
+                reportinfo = ReportInfo.objects.get(id=id)
+                Lid = id
+
+            # 第二种情况：未单击新建按钮，需判断此份报告是否已被创建,时间差>=100代表不是同一份报告
             else:
-                reportinfo = ReportInfo.objects.create(number=instrument_num,Detectionplatform=Detectionplatform,project=project,
-                platform=platform,manufacturers=manufacturers,verifyoccasion=verifyoccasion,status="未提交")
+                # 数据库中找到了相同项目名称和仪器编号的报告，需判断已找到的报告中日期最新的一份报告的创建时间与当前时间差是否>=100，>=100新建报告，否则不新建
+                if ReportInfo.objects.filter(number=instrument_num, project=project):
+                    A = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+                    A = datetime.strptime(A,'%Y-%m-%d')
+
+                    reportinfo = ReportInfo.objects.filter(number=instrument_num,Detectionplatform=Detectionplatform,project=project,
+                    platform=platform,manufacturers=manufacturers)
+
+                    daysdelta=[]
+                    existtime=[]
+                    for i in reportinfo:
+                        B = str(i.verifytime)
+                        existtime.append(B)
+                        B = datetime.strptime(B,'%Y-%m-%d')
+                        C = A-B
+                        daysdelta.append(C.days)
+
+                    # 日期最新的报告，即daysdelta中的最小值
+                    if min(daysdelta)>=100:
+                        reportinfo = ReportInfo.objects.create(number=instrument_num,Detectionplatform=Detectionplatform,project=project,
+                        platform=platform,manufacturers=manufacturers,verifyoccasion=verifyoccasion,status="未提交")
+
+                    # 如有多份报告存在，又未单击新建按钮，默认关联日期最新的报告
+                    else:
+                        reportinfo = ReportInfo.objects.get(number=instrument_num,Detectionplatform=Detectionplatform,project=project,platform=platform,
+                        manufacturers=manufacturers,verifytime=existtime[len(existtime)-1])    
+
+                # 数据库中未找到相同项目名称和仪器编号的报告，直接新建报告
+                else:
+                    reportinfo = ReportInfo.objects.create(number=instrument_num,Detectionplatform=Detectionplatform,project=project,
+                    platform=platform,manufacturers=manufacturers,verifyoccasion=verifyoccasion,status="未提交")
+
+                Lid = reportinfo.id
+
+            Lname = name
+            Ltime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
 
             # 四 验证原因关联
             if Validation_Reason.objects.filter(reportinfo_id=reportinfo):
@@ -155,21 +205,6 @@ def get_verification_page(request):
 
             else:
                 ValidationReason = ""
-
-            print(ValidationReason)
-
-            # if verifyoccasion == "新项目开发":
-            #     if Validation_Reason.objects.filter(reportinfo_id=reportinfo):
-            #         pass
-            #     else:
-            #         Validation_Reason.objects.create(reportinfo=reportinfo, reason="新项目首次开展")
-            # elif verifyoccasion == "期间核查":
-            #     if Validation_Reason.objects.filter(reportinfo_id=reportinfo):
-            #         pass
-            #     else:
-            #         Validation_Reason.objects.create(reportinfo=reportinfo, reason="项目已到期间核查时期")
-            # else:
-            #     pass
 
             # 五 AB厂家需根据离子对名称和离子对数值进行表格读取
             normAB = []
@@ -184,7 +219,6 @@ def get_verification_page(request):
                     ZP_Method_precursor_ion.append(i.precursor_ion)
                     ZP_Method_product_ion.append(i.product_ion)
                     
-
             except:
                 pass
             
@@ -193,15 +227,7 @@ def get_verification_page(request):
             print("ZP_Method_product_ion:%s" % (ZP_Method_product_ion))
             
             # 六 9个验证指标数据提取及操作日志添加
-
-            # 对应报告编号
-            try:
-                Lid = ReportInfo.objects.get(number=instrument_num,Detectionplatform=Detectionplatform,project=project,platform=platform,manufacturers=manufacturers).id
-            except:
-                pass
-
-            Lname = name
-            Ltime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+            
 
             # 1 精密度
             if request.POST["quota"] == "精密度":
@@ -210,14 +236,14 @@ def get_verification_page(request):
                 if request.POST["jmd"] == "重复性精密度":
                     namejmd = "重复性精密度"
                     files = request.FILES.getlist('fileuploads')
-                    Result = jmd.IntraP_fileread(files, reportinfo, namejmd, Detectionplatform, project, platform, manufacturers,Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds,Validation_Reason)
+                    Result = jmd.IntraP_fileread(files, reportinfo, namejmd, Detectionplatform, project, platform, manufacturers,Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds,Validation_Reason,Lid)
                     ReportLog.objects.create(reportinfo_id=Lid, operation = "上传数据"+":"+namejmd, operator = Lname, time = Ltime)
 
                 # 1.2 中间精密度
                 elif request.POST["jmd"] == "中间精密度":
                     namejmd = "中间精密度"
                     files = request.FILES.getlist('fileuploads')
-                    Result = jmd.InterP_fileread(files, reportinfo, namejmd, Detectionplatform, project, platform, manufacturers,Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds,Validation_Reason)
+                    Result = jmd.InterP_fileread(files, reportinfo, namejmd, Detectionplatform, project, platform, manufacturers,Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds,Validation_Reason,Lid)
                     ReportLog.objects.create(reportinfo_id=Lid, operation = "上传数据"+":"+namejmd, operator = Lname, time = Ltime)
                 return render(request, 'report/project/Jmd.html', locals())
 
@@ -231,16 +257,16 @@ def get_verification_page(request):
 
                     # 判断是否为25OHD项目
                     if "25OHD" not in project:
-                        Result = zqd.PTfileread(files, Detectionplatform, project, platform, manufacturers,digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds)
+                        Result = zqd.PTfileread(files, Detectionplatform, project, platform, manufacturers,digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds,Lid)
                     else:
-                        Result = zqd.PT_25OHD_fileread(files, Detectionplatform, project, platform, manufacturers,digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds)
+                        Result = zqd.PT_25OHD_fileread(files, Detectionplatform, project, platform, manufacturers,digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds,Lid)
                     ReportLog.objects.create(reportinfo_id=Lid, operation = "上传数据：PT", operator = Lname, time = Ltime)
                     return render(request, 'report/project/PT.html', locals())
 
                 # 2.2 加标回收率
                 elif request.POST["zqd"] == "加标回收":
                     files = request.FILES.getlist('fileuploads')
-                    Result = zqd.Recyclefileread(files,Detectionplatform, project, platform, manufacturers, Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds)
+                    Result = zqd.Recyclefileread(files,Detectionplatform, project, platform, manufacturers, Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB,Number_of_compounds,Lid)
                     ReportLog.objects.create(reportinfo_id=Lid, operation = "上传数据：加标回收率", operator = Lname, time = Ltime)
                     return render(request, 'report/project/Recycle.html', locals())
 
@@ -274,7 +300,7 @@ def get_verification_page(request):
                 # 3.2 方法检出限(Limit of Detection,LOD)
                 elif request.POST["amr"] == "方法检出限":
                     files = request.FILES.getlist('fileuploads')
-                    dicLOD = amr.LODfileread(files, reportinfo, project, platform, manufacturers,Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB, Number_of_compounds)
+                    Result = amr.LODfileread(files, reportinfo, project, platform, manufacturers,Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB, Number_of_compounds)
                     ReportLog.objects.create(reportinfo_id=Lid, operation = "上传数据：方法检出限(LOD)", operator = Lname, time = Ltime)   
                     return render(request, 'report/project/LOD.html', locals())
                 elif request.POST["amr"] == "结论":
@@ -284,7 +310,6 @@ def get_verification_page(request):
 
             elif request.POST["quota"] == "临床可报告范围":
                 if request.POST["crr"] == "不做验证":
-                    CRRid = ReportInfo.objects.get(number=instrument_num, project=project).id
                     ReportLog.objects.create(reportinfo_id=Lid, operation = "上传数据：临床可报告范围(不做验证)", operator = Lname, time = Ltime)  
                     return render(request, 'report/project/CRRspecial.html', locals())
                 else:
@@ -812,9 +837,20 @@ def get_report_page(request, id, operation):
             DilutionVerify = 0
             tableindex += 1
             titleindex += 1
+            project = ReportInfo.objects.get(id=id).project
+
+            # 2 优先查找特殊参数设置里是否有数据，如有就调用，没有则调用通用性参数设置里的数据
+            #特殊参数设置描述性内容
+            textlist_special = []
+            special_1 = Special.objects.get(project=project) 
+            special_2 = CRRspecial.objects.get(special=special_1)           
+            if CRRspecialtexts.objects.filter(cRRspecial=special_2).count()>0:
+                text_special = CRRspecialtexts.objects.filter(cRRspecial=special_2)  
+                for i in text_special:
+                    textlist_special.append(i.text)
         
         else:
-            # 1 进行稀释倍数验证      
+            # 进行稀释倍数验证      
         
             Dilutionindex = 0
 
@@ -993,23 +1029,20 @@ def get_report_page(request, id, operation):
     if not Reference_Interval_data["Referenceinterval_dict"]:
         Endconclusion = Endconclusion.replace('、参考区间', '')
 
-    if Instrument_number == "报告打印测试":
-        return render(request, 'report/reportprint.html', locals())
-    else: 
-        return render(request, 'report/Report_Operation.html', locals())
+    return render(request, 'report/Report_Operation.html', locals())
 
 # 删除及编辑
 def get_reportoperate_page(request,id):
     print(request.POST)
     operation = request.POST["operation"]
-    Protocol_ID1_str = request.POST["Protocol_ID1"]
-    Protocol_ID2_str = request.POST["Protocol_ID2"]
-    ValidationReason_str = request.POST["ValidationReason"]
     print(operation)
-
-    ReportInfo.objects.filter(id=id).update(Protocol_ID1 = Protocol_ID1_str)  # 更新Protocol_ID1
-    ReportInfo.objects.filter(id=id).update(Protocol_ID2 = Protocol_ID2_str)  # 更新Protocol_ID2
-    Validation_Reason.objects.filter(reportinfo_id=id) .update(reason =  ValidationReason_str)  # 更新验证原因
+    if operation =="edit":
+        Protocol_ID1_str = request.POST["Protocol_ID1"]
+        Protocol_ID2_str = request.POST["Protocol_ID2"]
+        ValidationReason_str = request.POST["ValidationReason"]
+        ReportInfo.objects.filter(id=id).update(Protocol_ID1 = Protocol_ID1_str)  # 更新Protocol_ID1
+        ReportInfo.objects.filter(id=id).update(Protocol_ID2 = Protocol_ID2_str)  # 更新Protocol_ID2
+        Validation_Reason.objects.filter(reportinfo_id=id) .update(reason =  ValidationReason_str)  # 更新验证原因
 
     # 从数据库中抓取当前用户名传递到layout.html
     try:
@@ -1166,7 +1199,6 @@ def get_reportoperate_page(request,id):
         return render(request, 'report/generation.html', locals())
 
 
-
 # 在报告生成界面点击继续验证时跳转的界面
 def get_verifyagain_page(request, id):
     # 从数据库中抓取当前用户名传递到layout.html
@@ -1238,7 +1270,7 @@ def get_verifyagain_page(request, id):
     manufacturers_verifyagain = ReportInfo.objects.get(id=id).manufacturers
     verifyoccasion_verifyagain = ReportInfo.objects.get(id=id).verifyoccasion
 
-    print(verifyoccasion_verifyagain)
+    print(id)
     return render(request, 'report/verification.html', locals())
 
 # 验证时机保存
@@ -1251,9 +1283,9 @@ def JMDsave(request):
         platform = request.POST["platform"]  # 仪器平台(液质,液相,ICP-MS...)       
         manufacturers = request.POST["manufacturers"] # 仪器厂家(AB,Agilent...)
         verifyoccasion = request.POST["verifyoccasion"]
+        id = request.POST["Lid"]
 
-        reportinfo = ReportInfo.objects.get(number=instrument_num,Detectionplatform=Detectionplatform,project=project,
-                platform=platform,manufacturers=manufacturers)
+        reportinfo = ReportInfo.objects.get(id = id)
 
         if Validation_Reason.objects.filter(reportinfo_id=reportinfo): 
             Validation_Reason.objects.filter(reportinfo_id=reportinfo).update(reason=verifyoccasion)
@@ -1287,6 +1319,7 @@ def PTsave(request):
         platform = request.POST["platform"]  # 仪器平台(液质,液相,ICP-MS...)
         manufacturers = request.POST["manufacturers"]  # 仪器厂家(AB,Agilent...)
         verifyoccasion = request.POST["verifyoccasion"]  # 验证时机
+        id = request.POST["Lid"]
 
         # 2 模板信息提取
         templates = request.POST["templates"]  # 模板
@@ -1323,22 +1356,27 @@ def PTsave(request):
                 for j in range(len(PT_norm)):
 
                     # PTshow为1时将其他数据结果保存到数据库
-                    if PTshow[i][j] == "1":
-                        PT_dict[PT_norm[j]][i].append(lowaccept[i][j])
-                        PT_dict[PT_norm[j]][i].append(upaccept[i][j])
-                        PT_dict[PT_norm[j]][i].append(PTpass[i][j])
+                    try:
+                        if PTshow[i][j] == "1":
+                            PT_dict[PT_norm[j]][i].append(lowaccept[i][j])
+                            PT_dict[PT_norm[j]][i].append(upaccept[i][j])
+                            PT_dict[PT_norm[j]][i].append(PTpass[i][j])
+                        
+                        # PTshow为0时保存""
+                        else:
+                            PT_dict[PT_norm[j]][i].append("不显示")
+                            PT_dict[PT_norm[j]][i].append("不显示")
+                            PT_dict[PT_norm[j]][i].append("不显示")
                     
-                    # PTshow为0时保存""
-                    else:
-                        PT_dict[PT_norm[j]][i].append("不显示")
-                        PT_dict[PT_norm[j]][i].append("不显示")
-                        PT_dict[PT_norm[j]][i].append("不显示")
 
-                    if PTpass[i][j] == "不通过":
-                        PT_judgenum += 1
+                        if PTpass[i][j] == "不通过":
+                            PT_judgenum += 1
+
+                    except:
+                        pass
 
             print(PT_dict)
-            reportinfo = ReportInfo.objects.get(number=request.POST["instrument_num"], project=request.POST["project"])
+            reportinfo = ReportInfo.objects.get(id = id)
 
             if PT_judgenum == 0:
                 insert_list = []
@@ -1412,7 +1450,7 @@ def PTsave(request):
                     if PTpass[i][j] == "不通过":
                         PT_judgenum += 1
 
-            reportinfo = ReportInfo.objects.get(number=request.POST["instrument_num"], project=request.POST["project"])
+            reportinfo = ReportInfo.objects.get(id=id)
 
             print(PT_dict)
 
@@ -1481,6 +1519,7 @@ def Recyclesave(request):
         platform = request.POST["platform"]  # 仪器平台(液质,液相,ICP-MS...)
         manufacturers = request.POST["manufacturers"]  # 仪器厂家(AB,Agilent...)
         verifyoccasion = request.POST["verifyoccasion"]  # 验证时机
+        id = request.POST["Lid"]
 
         # 2 提取html中的数据
         Recycle_dict = eval(str(request.POST.getlist("Recycle_enddict_savedata")[0])) # 需要提取数据保存字典，而不是数据展示字典
@@ -1542,7 +1581,7 @@ def Recyclesave(request):
                     for k in range(12): # 12为3个理论浓度，9个回收率
                         norm_dict[samname[j]].append("不显示")
 
-        reportinfo = ReportInfo.objects.get(number=request.POST["instrument_num"], project=request.POST["project"])
+        reportinfo = ReportInfo.objects.get(id = id)
 
         level = ["L", "M", "H"]
         if int(falsecounter) == 0:
@@ -1602,7 +1641,7 @@ def InstrumentComparesave(request):
         
         textarea = request.POST["textarea"]
 
-        reportinfo = ReportInfo.objects.get(number=instrument_num, project=project)
+        reportinfo = ReportInfo.objects.get(id=id)
         InstrumentCompare.objects.create(reportinfo=reportinfo, textarea=textarea)
 
         HttpResponse = "仪器比对数据保存成功!"
@@ -1626,6 +1665,7 @@ def LOQsave(request):
         platform = request.POST["platform"]  # 仪器平台(液质,液相,ICP-MS...)
         manufacturers = request.POST["manufacturers"]  # 仪器厂家(AB,Agilent...)
         verifyoccasion = request.POST["verifyoccasion"]  # 验证时机
+        id = request.POST["Lid"]
 
         if platform == "液质":
             judgenum = int(request.POST.getlist("judgenum")[0])  # 判断验证结果是否通过
@@ -1719,7 +1759,7 @@ def LOQsave(request):
                     AMR_dict[LOQ_norm[j]][S[i]].append(CV[i][j])
 
             # 数据保存
-            reportinfo = ReportInfo.objects.get(number=request.POST["instrument_num"], project=request.POST["project"])
+            reportinfo = ReportInfo.objects.get(id=id)
 
             print(LOQ_judge)
             if LOQ_judge == "通过!":
@@ -1827,8 +1867,7 @@ def AMR2save(request):
                 dic_AMRsave[AMR2save_norm[i]][AMR_STD[j]].append(
                     request.POST.getlist(string_CV)[i])
 
-        reportinfo = ReportInfo.objects.get(
-            number=request.POST["instrument_num"], project=request.POST["project"])
+        reportinfo = ReportInfo.objects.get(id=id)
 
         if AMR_judgenum == 0:
             insert_list = []
@@ -1898,10 +1937,12 @@ def LODsave(request):
         picturename = request.POST.getlist("picturename")
         conclusion = request.POST.getlist("conclusion")[0]
         LOD_id = int(request.POST.getlist("id")[0])
+
+        id = request.POST["Lid"]
+
         objs = LODpicture.objects.filter(reportinfo_id=LOD_id)
         for index, i in enumerate(objs):
-            LODpicture.objects.filter(img=i.img).update(
-                name=picturename[index])
+            LODpicture.objects.filter(img=i.img).update(name=picturename[index])
             LODpicture.objects.filter(img=i.img).update(conclusion=conclusion)
 
         objs = LODpicture.objects.filter(reportinfo_id=LOD_id)
@@ -1950,7 +1991,7 @@ def CRRsave(request):
         User_class = 1
     if request.method == 'POST':
         print(request.POST)
-        id = int(request.POST.getlist("id")[0])
+        id = request.POST["Lid"]
         compound = request.POST.getlist("compound")
         crr = request.POST.getlist("crr")
 
@@ -2358,8 +2399,9 @@ def Sample_Stability_Save(request):
             HttpResponse = "样品处理后稳定性数据保存成功!"
             return render(request, 'report/Datasave.html', locals())
 
-def verifyagain(request):
+def verifyagain(request,id):
     if request.method == 'POST':
+        print(id)
         instrument_num_verifyagain = request.POST["instrument_num"]
         # 项目组
         Detectionplatform_verifyagain = request.POST["Detectionplatform"]
@@ -2369,6 +2411,8 @@ def verifyagain(request):
         # 仪器厂家(AB,Agilent...)
         manufacturers_verifyagain = request.POST["manufacturers"]
         verifyoccasion_verifyagain = request.POST["verifyoccasion"]  # 验证时机
+        print(instrument_num_verifyagain)
+
     return render(request, 'report/verification.html', locals())
 
 def returnback(request):
@@ -2671,4 +2715,558 @@ def submitcheck(request, id, checklevel):
         checktime = ReportFlowChart.objects.get(reportinfo_id=id,operation="助理主任审核").time
 
     return render(request, 'report/generation.html', locals())
+
+
+# 方法学验证系统使用说明
+def instructions(request):
+    return render(request, 'report/Instructions/index.html')
+
+
+# 仪器比对报告生成系统
+def ICS_index(request):
+    return render(request, 'report/ICS/index.html')
+
+# 仪器比对报告生成系统 - 定量项目仪器比对报告 - 首页
+def ICS_QuantitativeReports(request):
+    data = ICS_main_table.objects.all()
+    return render(request, 'report/ICS/QuantitativeReports/QuantitativeReports.html', locals())
+
+# 仪器比对报告生成系统 - 新建报告
+def ICS_QuantitativeReports_Create(request):
+    data = ICS_parameters_table.objects.all()
+    return render(request, 'report/ICS/QuantitativeReports/Create.html', locals())
+
+def ICS_QuantitativeReports_Edit(request):
+    file = request.FILES.getlist('fileuploads')[0]
+    file2 = request.FILES.getlist('fileuploads')[0]
+    print(request.POST)
+    project = request.POST["project"]
+    target = request.POST["target"]
+    compare = request.POST["compare"]
+
+    # 抓取有效位数
+    parameters_table = ICS_parameters_table.objects.filter(project=project)
+    digitslst = []
+    for i in parameters_table:
+        digitslst.append(i.digits)
+
+    digits = int(digitslst[0])
+    
+    try:
+        file_data = file.read().decode('UTF-8')
+    except:
+        file_data = file.read().decode('GB2312')
+    
+    if len(file_data) == 0: 
+        file.seek(0) 
+        try:
+            file_data = file.read().decode('GB2312')
+        except:
+            file_data = file.read().decode('UTF-8')
+
+    lines = file_data.split('\r\n')
+
+    emptyindex = []
+    for i in range(len(lines)):
+        if len(lines[i]) != 0:
+            # 以逗号分隔字符串,但忽略双引号内的逗号
+            lines[i] = re.split(r',\s*(?![^"]*\"\,)', lines[i])
+            if lines[i][0]=='':
+                emptyindex.append(i)
+        else:
+            lines[i] = re.split(r',\s*(?![^"]*\"\,)', lines[i])
+            if lines[i][0]=='':
+                emptyindex.append(i)
+            del lines[i]  # 最后一行如为空行，则删除该元素
+        
+
+    # 计算循环的最大值
+    if emptyindex:
+        lastforloopindex = len(lines) - len(emptyindex) + 1
+    else:
+        lastforloopindex = len(lines)
+
+    A = []
+    B = []
+    Astr = []
+    Bstr = []
+    ID = []
+    for i in range(1,lastforloopindex):  # 循环原始数据中的每一行
+        ID.append(lines[i][0])
+        A.append(floateffectnum(lines[i][1],digits))
+        B.append(floateffectnum(lines[i][2],digits))
+        Astr.append(effectnum(lines[i][1],digits))
+        Bstr.append(effectnum(lines[i][2],digits))
+
+    # 样本量
+    samplesize=len(A)
+
+    # 计算偏移
+
+    # 抓取对应项目的criteria1_range,criteria2_range,criteria1,criteria2
+    criteria1_range = float(ICS_parameters_table.objects.get(project=project).criteria1_range)
+    criteria2_range = float(ICS_parameters_table.objects.get(project=project).criteria2_range)
+    criteria1 = float(ICS_parameters_table.objects.get(project=project).criteria1)
+    criteria2 = float(ICS_parameters_table.objects.get(project=project).criteria2)
+    bias = []
+    for i in range(0,samplesize):
+        if A[i] <= criteria1_range:
+            bias.append(B[i]- A[i])
+        elif A[i] > criteria2_range:
+            bias.append(B[i]- A[i])/B[i]
+
+    absbias = []
+    for i in range(0,samplesize):
+        if A[i] <= criteria1_range:
+            absbias.append(bias[i])
+        elif A[i] > criteria2_range:
+            absbias.append(bias[i]*100)
+
+    absbiasstr = [new_round(absbias[i]) for i in range(0,len(absbias))]
+
+    # 抓取对应项目的ALE,level1,level2
+    ALE = ICS_parameters_table.objects.get(project=project).ALE
+    level1 = float(ICS_parameters_table.objects.get(project=project).level1)
+    level2 = float(ICS_parameters_table.objects.get(project=project).level2)
+    HalfALE = float(ALE)/2
+
+    # 离群值
+    outerID=[]
+    z = [abs(A[i]- B[i]) for i in range(0,samplesize)] 
+    z1 = 4*float(mean(z))
+    for i in range(len(A)):
+        if z[i]>z1:
+            outerID.append(ID[i])
+
+    # 计算任意两点间的斜率,添加到列表S中
+    S = []
+    l = len(list(combinations(A,2))) # 排列组合总数
+    for i in range(0,(samplesize-1)):
+        for j in range((i+1),samplesize):
+            if A[i]==A[j]:
+                if B[i]>B[j]:
+                    S.append(float("inf")) 
+                elif B[i]<=B[j]:
+                    S.append(float("-inf")) 
+                else:
+                    # S.append(Nan) 
+                    pass
+            else:
+                S.append(round((B[i]-B[j])/(A[i]-A[j]),7))
+    
+
+    # 列表S排序
+    S_sort = sorted(S)
+
+    # 创建两个列表S_sort1和S_sort2 
+    S_sort1 = S_sort
+    S_sort2 = [S_sort[i] for i in range(0,len(S_sort)-1) if S_sort[i]<-1] 
+
+    N = len(S_sort1)
+    neg = len([S_sort[i] for i in range(0,len(S_sort)-1) if S_sort[i]<0] )  
+    K = len(S_sort2)
+
+    if N%2 == 0: 
+        N1 = N/2
+        b = (S_sort1[int(N1+K)]+S_sort1[int(N1+K+1)])/2   # 斜率
+    elif N%2 == 1:
+        N1 = (N-1)/2
+        b = S_sort1[int(N1+K+1)]
+    else:
+        N1 ="Neither!"
+
+    # 计算B-b*A
+    lista = [B[i]-b*A[i] for i in range(0,samplesize)] 
+    a = median(lista) # 截距
+
+    # 斜率的置信区间
+    C_gamma = norm.ppf(.975)*sqrt(samplesize*(samplesize-1)*(2*samplesize+5)/18)
+    M1 = int(round((N-C_gamma)/2,0))
+    M2 = N-M1+1
+    b_lower = S_sort1[M1+K]
+    b_upper = S_sort1[M2+K]
+
+    print("b_lower:%s" % (b_lower))
+    print("b_upper:%s" % (b_upper))
+
+    # 截距的置信区间
+    lista_lower = [B[i]-b_upper*A[i] for i in range(0,samplesize)] 
+    lista_upper = [B[i]-b_lower*A[i] for i in range(0,samplesize)] 
+
+    a_lower = median(lista_lower)
+    a_upper = median(lista_upper)
+
+    print("a_lower:%s" % (a_lower))
+    print("a_upper:%s" % (a_upper))
+
+    # 带入医学决定水平计算
+    Y1 = b*level1+a
+    Y1_lower = b_lower*level1+a_lower
+    Y1_upper = b_upper*level1+a_upper
+
+    SE1_XC1 = abs(Y1_lower-level1)/level1*100
+    SE1_XC2 = abs(Y1_upper-level1)/level1*100
+    SE1_XC = max(SE1_XC1,SE1_XC2)
+
+    Y2 = b*level2+a
+    Y2_lower = b_lower*level2+a_lower
+    Y2_upper = b_upper*level2+a_upper
+
+    SE2_XC1 = abs(Y2_lower-level2)/level2*100
+    SE2_XC2 = abs(Y2_upper-level2)/level2*100
+    SE2_XC = max(SE2_XC1,SE2_XC2)
+
+    # 其他统计信息
+    # 1 最大最小值
+    lowestA = new_round(min(A),4)
+    lowestB = new_round(min(B),4)
+    highestA = new_round(max(A),4)
+    highestB = new_round(max(B),4)
+
+    # 2 平均数中位数
+    meanA = new_round(mean(A),4)
+    meanB = new_round(mean(B),4)
+    medianA = new_round(median(A),4)
+    medianB = new_round(median(B),4)
+
+    # 3 标准差标准误
+    sdA = new_round(sd(A),4)
+    sdB = new_round(sd(B),4)
+    seA = new_round(se(A),4)
+    seB = new_round(se(B),4)
+
+    # 有效位数、小数点后位数转换
+    # A = Astr
+    # B = Bstr
+
+    a = new_round(a,4)
+    b = new_round(b,4)
+    a_lower = new_round(a_lower,4)
+    b_lower = new_round(b_lower,4)
+    a_upper = new_round(a_upper,4)
+    b_upper = new_round(b_upper,4)
+
+    Y1 = new_round(Y1,4)
+    Y2 = new_round(Y2,4)
+    Y1_lower = new_round(Y1_lower,4)
+    Y2_lower = new_round(Y2_lower,4)
+    Y1_upper = new_round(Y1_upper,4)
+    Y2_upper = new_round(Y2_upper,4)
+
+    SE1_XCstr = new_round(SE1_XC,1)
+    SE2_XCstr = new_round(SE2_XC,1)
+
+    # outerID=["12345"]
+
+    # 数据保存
+    # ICS_main_table.objects.create(project=project,systermA=target,systermB=compare)
+
+    print("effect:%s" % (effectnum(30.15,3)))
+
+    return render(request, 'report/ICS/QuantitativeReports/Edit.html',locals())
+
+def ICS_QuantitativeReports_Save(request):
+    print(request.POST)
+    project = request.POST["project"]
+    target = request.POST["target"]
+    compare = request.POST["compare"]
+
+    lastdate = request.POST["lastdate"] # 上次验证时间
+    english_code = request.POST["english_code"] # 英文代码
+    chinese_code = request.POST["chinese_code"] # 中文代码
+
+    compare_goal = request.POST["compare_goal"] # 比对目的
+    reagent = request.POST["reagent"] # 检测试剂
+    batch = request.POST["batch"] # 批号
+
+    testdate = request.POST["testdate"] # 检测日期
+    assessdate = request.POST["assessdate"] # 评估日期
+    testname = request.POST["testname"] # 检测人员
+
+    researchname = request.POST["researchname"] # 调查者
+    researchdate1 = request.POST["researchdate1"] # 调查日期1
+    director = request.POST["director"] # 主任
+    researchdate2 = request.POST["researchdate2"] # 调查日期2
+
+    # 原始数据
+    samplename = eval(str(request.POST.getlist("samplename")[0]))
+    resultA = eval(str(request.POST.getlist("resultA")[0]))
+    resultB = eval(str(request.POST.getlist("resultB")[0]))
+    bias = eval(str(request.POST.getlist("bias")[0])) 
+
+    maintableinfo = ICS_main_table.objects.create(project=project,target=target,compare=compare,
+    lastdate=lastdate,english_code=english_code,chinese_code=chinese_code,compare_goal=compare_goal,reagent=reagent,batch=batch,
+    testdate=testdate,assessdate=assessdate,testname=testname,researchname=researchname,researchdate1=researchdate1,director=director,
+    researchdate2=researchdate2)
+
+    insert_list = []
+    for i in range(0,len(samplename)):
+        insert_list.append(ICS_data_table(ics_main_table=maintableinfo, samplename=samplename[i], 
+        resultA=resultA[i],resultB=resultB[i],bias=bias[i]))
+
+    ICS_data_table.objects.bulk_create(insert_list)
+    data = ICS_main_table.objects.all()
+    return render(request, 'report/ICS/QuantitativeReports/QuantitativeReports.html', locals())
+
+def ICS_QuantitativeReports_Operate(request,id, operation):
+    # 抓取待预览的报告
+    QuantitativeReports = ICS_main_table.objects.get(id=id)
+
+    # 基本信息
+    project = QuantitativeReports.project  # 比对项目名称
+    target = QuantitativeReports.target  # 检测系统A
+    compare = QuantitativeReports.compare  # 检测系统B
+    lastdate = QuantitativeReports.lastdate  # 上次验证时间
+    english_code = QuantitativeReports.english_code  # 英文代码
+    chinese_code = QuantitativeReports.chinese_code  # 中文代码
+
+    compare_goal = QuantitativeReports.compare_goal  # 比对目的
+    reagent = QuantitativeReports.reagent  # 检测试剂
+    batch = QuantitativeReports.batch  # 批号
+    testdate = QuantitativeReports.testdate  # 检测日期
+    assessdate = QuantitativeReports.assessdate  # 评估日期
+    testname = QuantitativeReports.testname  # 检测人员
+
+    researchname = QuantitativeReports.researchname  # 调查者
+    researchdate1 = QuantitativeReports.researchdate1  # 调查日期1
+    director = QuantitativeReports.director  # 主任
+    researchdate2 = QuantitativeReports.researchdate2  # 调查日期2
+
+    #  单位
+    unit = ICS_parameters_table.objects.get(project=project).unit
+
+    # 关联数据
+    samplename = []
+    resultA = []
+    resultB = []
+    bias = []
+
+    QuantitativeReports_data = ICS_data_table.objects.filter(ics_main_table_id=id)
+    for i in QuantitativeReports_data:
+        samplename.append(i.samplename)
+        resultA.append(i.resultA)
+        resultB.append(i.resultB)
+        bias.append(i.bias)
+
+    biasnum = [float(bias[i]) for i in range(0,len(bias))]
+    biasstr = [new_round(biasnum[i]) for i in range(0,len(biasnum))]
+
+    ALE = ICS_parameters_table.objects.get(project=project).ALE
+    digits = ICS_parameters_table.objects.get(project=project).digits
+    HalfALE = float(ALE)/2
+
+    # 求解截距和斜率
+    A = [float(resultA[i]) for i in range(0,len(resultA))] 
+    B = [float(resultB[i]) for i in range(0,len(resultB))] 
+
+    # 样本量
+    samplesize=len(A)
+
+    # 抓取对应项目的ALE,level1,level2,criteria1_range,criteria2_range,criteria1,criteria2
+    ALE = ICS_parameters_table.objects.get(project=project).ALE
+    level1 = float(ICS_parameters_table.objects.get(project=project).level1)
+    level2 = float(ICS_parameters_table.objects.get(project=project).level2)
+    criteria1_range = float(ICS_parameters_table.objects.get(project=project).criteria1_range)
+    criteria2_range = float(ICS_parameters_table.objects.get(project=project).criteria2_range)
+    criteria1 = float(ICS_parameters_table.objects.get(project=project).criteria1)
+    criteria2 = float(ICS_parameters_table.objects.get(project=project).criteria2)
+    HalfALE = float(ALE)/2
+
+    # 离群值
+    # outerID=[]
+    # z = [abs(A[i]- B[i]) for i in range(0,samplesize)] 
+    # z1 = 4*float(mean(z))
+    # for i in range(len(A)):
+    #     if z[i]>z1:
+    #         outerID.append(ID[i])
+
+    # 计算任意两点间的斜率,添加到列表S中
+    S = []
+    l = len(list(combinations(A,2))) # 排列组合总数
+    for i in range(0,(samplesize-1)):
+        for j in range((i+1),samplesize):
+            if A[i]==A[j]:
+                if B[i]>B[j]:
+                    S.append(float("inf")) 
+                elif B[i]<=B[j]:
+                    S.append(float("-inf")) 
+                else:
+                    # S.append(Nan) 
+                    pass
+            else:
+                S.append(round((B[i]-B[j])/(A[i]-A[j]),7))
+    
+    # print("outerID:%s" % (outerID))
+
+    # 列表S排序
+    S_sort = sorted(S)
+
+    # 创建两个列表S_sort1和S_sort2 
+    S_sort1 = S_sort
+    S_sort2 = [S_sort[i] for i in range(0,len(S_sort)-1) if S_sort[i]<-1] 
+
+    N = len(S_sort1)
+    neg = len([S_sort[i] for i in range(0,len(S_sort)-1) if S_sort[i]<0] )  
+    K = len(S_sort2)
+
+    if N%2 == 0: 
+        N1 = N/2
+        b = (S_sort1[int(N1+K)]+S_sort1[int(N1+K+1)])/2   # 斜率
+    elif N%2 == 1:
+        N1 = (N-1)/2
+        b = S_sort1[int(N1+K+1)]
+    else:
+        N1 = "Neither!"
+
+    # 计算B-b*A
+    lista = [B[i]-b*A[i] for i in range(0,samplesize)] 
+    a = median(lista) # 截距
+
+    # 斜率的置信区间
+    C_gamma = norm.ppf(.975)*sqrt(samplesize*(samplesize-1)*(2*samplesize+5)/18)
+    M1 = int(round((N-C_gamma)/2,0))
+    M2 = N-M1+1
+    b_lower = S_sort1[M1+K]
+    b_upper = S_sort1[M2+K]
+
+    print("b_lower:%s" % (b_lower))
+    print("b_upper:%s" % (b_upper))
+
+    # 截距的置信区间
+    lista_lower = [B[i]-b_upper*A[i] for i in range(0,samplesize)] 
+    lista_upper = [B[i]-b_lower*A[i] for i in range(0,samplesize)] 
+
+    a_lower = median(lista_lower)
+    a_upper = median(lista_upper)
+
+    print("a_lower:%s" % (a_lower))
+    print("a_upper:%s" % (a_upper))
+
+    # 带入医学决定水平计算
+    Y1 = b*level1+a
+    Y1_lower = b_lower*level1+a_lower
+    Y1_upper = b_upper*level1+a_upper
+
+    SE1_XC1 = abs(Y1_lower-level1)/level1*100
+    SE1_XC2 = abs(Y1_upper-level1)/level1*100
+    SE1_XC = max(SE1_XC1,SE1_XC2)
+
+    Y2 = b*level2+a
+    Y2_lower = b_lower*level2+a_lower
+    Y2_upper = b_upper*level2+a_upper
+
+    SE2_XC1 = abs(Y2_lower-level2)/level2*100
+    SE2_XC2 = abs(Y2_upper-level2)/level2*100
+    SE2_XC = max(SE2_XC1,SE2_XC2)
+
+    # 其他统计信息
+    # 1 最大最小值
+    lowestA = new_round(min(A),4)
+    lowestB = new_round(min(B),4)
+    highestA = new_round(max(A),4)
+    highestB = new_round(max(B),4)
+
+    # 2 平均数中位数
+    meanA = new_round(mean(A),4)
+    meanB = new_round(mean(B),4)
+    medianA = new_round(median(A),4)
+    medianB = new_round(median(B),4)
+
+    # 3 标准差标准误
+    sdA = new_round(sd(A),4)
+    sdB = new_round(sd(B),4)
+    seA = new_round(se(A),4)
+    seB = new_round(se(B),4)
+
+    # 有效位数、小数点后位数转换
+    a = new_round(a,4)
+    b = new_round(b,4)
+    a_lower = new_round(a_lower,4)
+    b_lower = new_round(b_lower,4)
+    a_upper = new_round(a_upper,4)
+    b_upper = new_round(b_upper,4)
+
+    Y1 = new_round(Y1,4)
+    Y2 = new_round(Y2,4)
+    Y1_lower = new_round(Y1_lower,4)
+    Y2_lower = new_round(Y2_lower,4)
+    Y1_upper = new_round(Y1_upper,4)
+    Y2_upper = new_round(Y2_upper,4)
+
+    SE1_XCstr = new_round(SE1_XC,1)
+    SE2_XCstr = new_round(SE2_XC,1)
+
+    print("effect:%s" % (effectnum("30.15",3)))
+    return render(request, 'report/ICS/QuantitativeReports/Operation.html', locals())
+
+def ICS_QuantitativeReports_Delete(request,id):
+    ICS_main_table.objects.get(id=id).delete()
+    data = ICS_main_table.objects.all()
+    return render(request, 'report/ICS/QuantitativeReports/QuantitativeReports.html', locals())
+
+# 仪器比对报告生成系统 - 项目参数设置 - 首页
+def ICS_ProjectParameters(request):
+    create = True
+    data = ICS_parameters_table.objects.all()
+    return render(request, 'report/ICS/ProjectParameters/ProjectParameters.html', locals())
+
+# 仪器比对报告生成系统 - 新建参数设置
+def ICS_ProjectParameters_Create(request):
+    return render(request, 'report/ICS/ProjectParameters/Create.html')
+
+# 仪器比对报告生成系统 - 项目参数设置 - 编辑
+def ICS_ProjectParameters_Edit(request,id):
+    data = ICS_parameters_table.objects.get(id=id)
+    return render(request, 'report/ICS/ProjectParameters/Edit.html', locals())
+
+# 仪器比对报告生成系统 - 新建参数设置 - 保存
+def ICS_ProjectParameters_Save(request):
+    print(request.POST)
+    project = request.POST["project"]
+    criteria1_range = request.POST["criteria1_range"]
+    criteria1 = request.POST["criteria1"]
+    criteria2_range = request.POST["criteria2_range"]
+    criteria2 = request.POST["criteria2"]
+    level1 = request.POST["level1"]
+    level2 = request.POST["level2"]
+    digits = request.POST["digits"]
+    unit = request.POST["unit"]
+    LOQ = request.POST["LOQ"]
+    ALE = request.POST["ALE"]
+
+    # 三 判断此份报告是否已被创建
+    if ICS_parameters_table.objects.filter(project=project):
+        create = False
+        return render(request, 'report/ICS/ProjectParameters/Create.html', locals())
+    else:
+        ICS_parameters_table.objects.create(project=project,criteria1_range=criteria1_range,criteria1=criteria1,
+        criteria2_range=criteria2_range,criteria2=criteria2,level1=level1,level2=level2,digits=digits,unit=unit,
+        LOQ=LOQ,ALE=ALE)
+
+        data = ICS_parameters_table.objects.all()
+        return render(request, 'report/ICS/ProjectParameters/ProjectParameters.html',locals())
+
+# 仪器比对报告生成系统 - 编辑参数设置 - 保存
+def ICS_ProjectParameters_EditSave(request):
+    print(request.POST)
+    id = request.POST["id"]
+    project = request.POST["project"]
+    criteria1_range = request.POST["criteria1_range"]
+    criteria1 = request.POST["criteria1"]
+    criteria2_range = request.POST["criteria2_range"]
+    criteria2 = request.POST["criteria2"]
+    level1 = request.POST["level1"]
+    level2 = request.POST["level2"]
+    digits = request.POST["digits"]
+    unit = request.POST["unit"]
+    LOQ = request.POST["LOQ"]
+    ALE = request.POST["ALE"]
+
+    ICS_parameters_table.objects.filter(id=id).update(project=project,criteria1_range=criteria1_range,criteria1=criteria1,
+    criteria2_range=criteria2_range,criteria2=criteria2,level1=level1,level2=level2,digits=digits,unit=unit,
+    LOQ=LOQ,ALE=ALE)
+
+    data = ICS_parameters_table.objects.all()
+
+    return render(request, 'report/ICS/ProjectParameters/ProjectParameters.html', locals())
 

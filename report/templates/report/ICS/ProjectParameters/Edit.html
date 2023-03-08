@@ -1,0 +1,103 @@
+{% extends "report/ICS/index.html" %}
+{% block content %}
+
+<style>
+    select {
+        width: 200px;
+        height: 50px;
+    }
+
+    .form-group{
+        width: 350px;
+        height: 80px;
+    }
+
+    input{
+        width: 100px;
+    }
+
+    .a{
+        width: 50px;
+        height: 50px;
+        font-size: large;
+    }
+
+</style>
+
+<div class="container">
+    <form action="{% url 'ICS_ProjectParameters_EditSave' %}" method="POST" enctype="multipart/form-data">
+
+        <input hidden = "hidden" value="{{id}}" name="id">
+
+        <main role="main" class="pb-3">
+            <div class="col-md">
+                <h1>编辑</h1>
+                <h2>项目参数</h2>
+            </div>
+            <hr>
+    
+            <div class="form-group">
+                <label for="usr">项目名称</label>
+                <input type="text" class="form-control" id="usr" name="project" value={{data.project}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">判断标准一适用范围（<=）</label>
+                <input type="text" class="form-control" id="usr" name="criteria1_range" value={{data.criteria1_range}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">判断标准一（差值）</label>
+                <input type="text" class="form-control" id="usr" name="criteria1" value={{data.criteria1}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">判断标准二适用范围（>）</label>
+                <input type="text" class="form-control" id="usr" name="criteria2_range" value={{data.criteria2_range}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">判断标准二（%）</label>
+                <input type="text" class="form-control" id="usr" name="criteria2" value={{data.criteria2}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">医学决定水平一</label>
+                <input type="text" class="form-control" id="usr" name="level1" value={{data.level1}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">医学决定水平二（如果没有，填入医学决定水平一的值）</label>
+                <input type="text" class="form-control" id="usr" name="level2" value={{data.level2}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">有效数字位数</label>
+                <input type="text" class="form-control" id="usr" name="digits" value={{data.digits}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">单位</label>
+                <input type="text" class="form-control" id="usr" name="unit" value={{data.unit}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">LOQ</label>
+                <input type="text" class="form-control" id="usr" name="LOQ" value={{data.LOQ}}>
+            </div>
+    
+            <div class="form-group">
+                <label for="usr">ALE(%)</label>
+                <input type="text" class="form-control" id="usr" name="ALE" value={{data.ALE}}>
+            </div>
+
+            <div><input type="submit" value="保存" class="btn btn-primary" /></div>
+        </main>
+    </form>
+    
+    <br>
+    <div class="a"><a href="{% url 'ICS_ProjectParameters' %}">返回</a></div>
+</div>
+
+
+{% endblock %}

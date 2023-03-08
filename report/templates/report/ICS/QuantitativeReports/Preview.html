@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% load static %}
+{% load myfilter %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrintDemo</title>
+
+    <script src="{% static 'report/content/jquery-1.10.2.min.js' %}"></script>
+    <script src="{% static 'report/content/paged.polyfill.js' %}"></script>
+
+    <style>
+        /* 一 封面 */
+
+        .covertr,
+        .covertd {
+            /* 设置固定高度，保证封面打印时独占第一页 */
+            display: block;
+            height: 920px;
+            /* background-color: #bfa; */
+        }
+
+        /* 中英文大标题 */
+
+        .Cover_englishtitle_big,
+        .Cover_chinesetitle_big {
+            font-weight: bold;
+            font-family: Times New Roman, 宋体;
+            text-align: center;
+        }
+
+        .Cover_englishtitle_big {
+            margin-top: 80px;
+            margin-bottom: 50px;
+        }
+
+        .Cover_chinesetitle_big {
+            margin-bottom: 70px;
+        }
+
+        /*中英文小标题*/
+
+        .Cover_englishtitle_small,
+        .Cover_chinesetitle_small {
+            font-size: 18.6px;
+            font-weight: bold;
+            font-family: Times New Roman, 宋体;
+            text-align: center;
+            line-height: 90px;
+        }
+
+        /* 仪器编号，仪器型号，色谱柱 */
+
+        .project,
+        .systermA,
+        .systermB,
+        .lastdate {
+            font-size: 18.6px;
+            font-weight: bold;
+            font-family: Times New Roman, 宋体;
+            text-align: center;
+            line-height: 50px;
+        }
+
+        .lastdate {
+            margin-bottom: 70px;
+        }
+
+
+        /*ProtocolID，代码*/
+
+        .Cover_ProtocolID,
+        .Cover_code {
+            font-size: 20px;
+            font-weight: bold;
+            font-family: Times New Roman, 宋体;
+            text-align: center;
+        }
+
+        .Cover_ProtocolID {
+            margin-bottom: 30px;
+        }
+
+        html,
+        body {
+            font-size: 15px;
+        }
+
+        body {
+            margin: 0;
+            -webkit-print-color-adjust: exact;
+        }
+
+        @page {
+            size: A4;
+            margin-top: 20mm;
+            margin-bottom: 20mm;
+            margin-left: 20mm;
+            margin-right: 20mm;
+
+        }
+
+        @page {
+            padding-top: 20px;
+
+            @top-center {
+                content: element(title);
+            }
+
+            @bottom-right {
+                color: black;
+                content: "Page " counter(page) "/" counter(pages) "";
+            }
+
+            @bottom-left {
+                content: element(footer);
+            }
+        }
+
+        @page: nth(1) {
+            padding-top: 20px;
+
+            @top-center {
+                content: element(title);
+            }
+
+            @bottom-right {
+                color: black;
+                content: "第 " counter(page) " 頁，共 " counter(pages) " 頁";
+            }
+
+            @bottom-left {
+                content: element(footer);
+            }
+        }
+
+        .pagedjs_page:not([data-page-number="0"]) .pagedjs_margin-top-left-corner-holder,
+        .pagedjs_page:not([data-page-number="0"]) .pagedjs_margin-top,
+        .pagedjs_page:not([data-page-number="0"]) .pagedjs_margin-top-right-corner-holder {
+            /* background: #658db4; */
+            /* outline: 2px #658db4; */
+        }
+
+        .cover {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .title {
+            position: running(title);
+            color: black;
+            font-size: 10px;
+        }
+
+        .footer {
+            position: running(footer);
+            font-size: 10px;
+            color: #black;
+            /* border-top: 2px solid #ccc; */
+        }
+
+        .row {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+        }
+
+        .col {
+            margin-left: 2rem;
+        }
+
+        /* .avoid-break {
+            page-break-before: always;
+        }
+
+        .force-break {
+            page-break-before: always;
+        } */
+
+        .section+.section {
+            margin-top: 4rem;
+        }
+
+        table {
+            text-align: center;
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 1.1em;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ccc;
+        }
+
+
+        .chapter {
+            break-before: page;
+        }
+
+        .title {
+            margin-top: 30px;
+        }
+
+        .mainbodyimg {
+            height: 100px;
+            width: 180px;
+            margin-left: -500px;
+            margin-top: -40px;
+        }
+
+        .mainbody_chititle {
+            /* margin-left:-500px; */
+            font-size: 10px;
+            margin-top: -50px;
+        }
+
+
+        .mainbody_engtitle {
+            /* margin-left:-500px; */
+            font-size: 10px;
+            margin-top: -50px;
+        }
+
+        .mainbody_chifooter {
+            /* margin-left:-500px; */
+            font-size: 10px;
+            margin-top: -5px;
+            margin-bottom: 5px;
+        }
+
+
+        .mainbody_engfooter {
+            /* margin-left:-500px; */
+            font-size: 10px;
+            margin-top: -5px;
+        }
+
+        .cover_chititle {
+            /* margin-left:-500px; */
+            font-size: 10px;
+            margin-top: -50px;
+
+        }
+
+
+        .cover_engtitle {
+            /* margin-left:-500px; */
+            font-size: 10px;
+            margin-top: -50px;
+        }
+
+        .cover_chifooter {
+            /* margin-left:-500px; */
+            font-size: 10px;
+            margin-top: -5px;
+            margin-bottom: 5px;
+        }
+
+
+        .cover_engfooter {
+            /* margin-left:-500px; */
+            font-size: 10px;
+            margin-top: -5px;
+        }
+
+        table tbody tr td {
+            font-size: 14px;
+        }
+
+        .tablename {
+            /* margin-bottom: -30px; */
+        }
+
+        .conclusion {
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <input hidden="hidden" value={{a_lower}} id="Intercept_lower">
+    <input hidden="hidden" value={{a_upper}} id="Intercept_upper">
+    <input hidden="hidden" value={{b_lower}} id="Slope_lower">
+    <input hidden="hidden" value={{b_upper}} id="Slope_upper">
+
+    <input hidden="hidden" type="text" name="resultA" value="{{A}}">
+    <input hidden="hidden" type="text" name="resultB" value="{{B}}">
+    <input hidden="hidden" type="text" name="samplename" value="{{ID}}">
+
+    <div class="section avoid-break">
+        <div class="title">
+            <img src="/static/report/img/logo.png" class="mainbodyimg">
+            <div class="cover_chititle">广州金域医学检验中心有限公司</div>
+            <br>
+            <div class="cover_engtitle">Guangzhou Kingmed Center for Clinical Laboratory</div>
+        </div>
+        <div class="footer">
+            <div class="cover_chifooter">Results comparison of same test item on different testing system and Report
+            </div>
+            <div class="cover_engfooter">同一检测项目不同检测系统结果比对报告</div>
+        </div>
+        <!--英文大标题-->
+        <h1 class="Cover_englishtitle_big">Results comparison of same test item on <br> different testing system and
+            Report</h1>
+
+        <!--中文大标题-->
+        <h1 class="Cover_chinesetitle_big">同一检测项目不同检测系统结果比对报告</h1>
+
+        <h2 class="project">比对项目名称：{{project}}</h2>
+        <h2 class="systermA">检测系统A：{{target}}</h2>
+        <h2 class="systermB">检测系统B：{{compare}}</h2>
+        <h2 class="lastdate">上次验证时间：{{lastdate}}</h2>
+
+
+        <!-- Protocol ID，代码 -->
+        <h2 class="Cover_ProtocolID">Protocol ID：{{english_code}}</h2>
+        <h2 class="Cover_code">代码：{{chinese_code}}</h2>
+    </div>
+
+    <div class="section avoid-break chapter" id="report1">
+        <div class="title">
+            <img src="/static/report/img/logo.png" class="mainbodyimg">
+            <div class="mainbody_chititle">广州金域医学检验中心有限公司</div>
+            <br>
+            <div class="mainbody_engtitle">Guangzhou Kingmed Center for Clinical Laboratory</div>
+        </div>
+        <div class="footer">
+            <div class="mainbody_chifooter">Results comparison of same test item on different testing system and Report
+            </div>
+            <div class="mainbody_engfooter">同一检测项目不同检测系统结果比对报告</div>
+        </div>
+
+        <!-- 比对目的 -->
+        <h3>一、比对目的:</h3>
+        <div>{{compare_goal}}</div>
+
+        <!-- 比对数据 -->
+        <h3>二、比对数据:</h3>
+        <h3 style="text-align: center;">同一检测项目不同检测系统/方法的比对结果登记表</h3>
+        <p class="tablename" style="text-align: right;">表号：GZKM-SOP03.22.01</p>
+        
+
+        <table class="table1" cellpadding="4">
+            <tbody>
+                <tr>
+                    <td colspan="3" style="border-top: 1px solid black;">
+                        比对项目名称：{{project}}
+                    </td>
+                </tr>
+                <tr>
+                    <td width="26%"></td>
+                    <td class="text-center" width="37%">检测系统A</td>
+                    <td class="text-center" width="37">检测系统B</td>
+                </tr>
+                <tr>
+                    <td>检测设备或<br>检测方法：</td>
+                    <td class="text-center" id="target">{{target}}</td>
+                    <td class="text-center" id="compare">{{compare}}</td>
+                </tr>
+                <tr>
+                    <td>检测试剂/批号：</td>
+                    <td class="text-center">{{reagent}}</td>
+                    <td class="text-center">{{batch}}</td>
+                </tr>
+                <tr class="basicinfo">
+                    <td style="border: none;">检测日期：{{testdate}}</td>
+                    <td class="text-center" style="border: none;">评估日期：{{assessdate}}</td>
+                    <td class="text-center" style="border: none;">检测人员：{{testname}}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="table2" cellpadding="4">
+            <thead>
+                <tr class="table-active text-center">
+                    <td>样本编号</td>
+                    <td>检测系统A结果(ug/L)</td>
+                    <td>检测系统B结果(ug/L)</td>
+                    <td>偏倚/一致性判断</td>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for item in resultA %}
+                <tr class="result text-center">
+                    <td width="25%">{{samplename|get_index:forloop.counter}}</td>
+                    <td width="25%" class="dataA">{{resultA|get_index:forloop.counter}}</td>
+                    <td width="25%" class="dataB">{{resultB|get_index:forloop.counter}}</td>
+                    {% if bias|get_index:forloop.counter < HalfALE %} 
+                    <td width="25%">
+                        {{bias|get_index:forloop.counter}}% / Y</td>
+                        {% else %}
+                        <td width="25%">{{bias|get_index:forloop.counter}}% / N</td>
+                        {% endif %}
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="4" style="border-top: 1px solid black;" class="conclusion">
+                        不同检测系统结果比对分析：<br />
+                        回归方程为 y = {{a}} + {{b}} x，
+                        斜率b的95%置信区间为（{{b_lower}} ~ {{b_upper}}），
+                        截距a的95%置信区间为（{{a_lower}} ~ {{a_upper}}）。
+
+                        代入医学决定水平值Xc1={{level1}}算出Y为{{Y1}}
+                        （Y的置信区间为{{Y1_lower}} ~ {{Y1_upper}}），
+                        最大SE/Xc%为{{SE1_XC}}%，
+
+                        {% if SE1_XC < HalfALE %} <span>小于1/2ALE {{HalfALE}}%。</span>
+                            {% else %}
+                            <span>大于1/2ALE {{HalfALE}}%。</span>
+                            {% endif %}
+
+                            代入医学决定水平值Xc2={{level2}}算出Y为{{Y2}}
+                            （Y的置信区间为{{Y2_lower}} ~ {{Y2_upper}}），
+                            最大SE/Xc%为{{SE2_XC}}%，
+                            {% if SE1_XC < HalfALE %} <span>小于1/2ALE {{HalfALE}}%。</span>
+                                {% else %}
+                                <span>大于1/2ALE {{HalfALE}}%。</span>
+                                {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="table3" cellpadding="4" style="page-break-inside:avoid">
+            <tbody>
+                <tr>
+                    <td colspan="2" style="border-top: 1px solid black; width: 50%;">
+                        <table>
+                            <tr>
+                                <td style="border-top: 1px solid black;">Variable X</td>
+                                <td style="border-top: 1px solid black;">{{target}}</td>
+                            </tr>
+                            <tr>
+                                <td>Variable Y</td>
+                                <td>{{compare}}</td>
+                            </tr>
+                            <tr>
+                                <td>Sample size</td>
+                                <td>{{samplesize}}</td>
+                            </tr>
+                        </table>
+                        <table>
+                            <tr>
+                                <td width="44%"></td>
+                                <td width="28%">Variable X</td>
+                                <td width="28%">Variable Y</td>
+                            </tr>
+                            <tr>
+                                <td>Lowest value</td>
+                                <td class="text-right">{{lowestA}}</td>
+                                <td class="text-right">{{lowestB}}</td>
+                            </tr>
+                            <tr>
+                                <td>Highest value</td>
+                                <td class="text-right">{{highestA}}</td>
+                                <td class="text-right">{{highestB}}</td>
+                            </tr>
+                            <tr>
+                                <td>Arithmetic mean</td>
+                                <td class="text-right">{{meanA}}</td>
+                                <td class="text-right">{{meanB}}</td>
+                            </tr>
+                            <tr>
+                                <td>Median</td>
+                                <td class="text-right">{{medianA}}</td>
+                                <td class="text-right">{{medianB}}</td>
+                            </tr>
+                            <tr>
+                                <td>Standard deviation</td>
+                                <td class="text-right">{{sdA}}</td>
+                                <td class="text-right">{{sdB}}</td>
+                            </tr>
+                            <tr>
+                                <td>Standard error of the mean</td>
+                                <td class="text-right">{{seA}}</td>
+                                <td class="text-right">{{seB}}</td>
+                            </tr>
+                        </table>
+                        <table>
+                            <tr>
+                                <td colspan="2">Regression Equation</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" id="regression">y = {{a}} + {{b}} x</td>
+                            </tr>
+                            <tr>
+                                <td>Intercept A</td>
+                                <td class="text-right" id="Intercept">{{a}}</td>
+                            </tr>
+                            <tr>
+                                <td>95% CI</td>
+                                <td class="text-right">{{a_lower}} to {{a_upper}}</td>
+                            </tr>
+                            <tr>
+                                <td>Slope B</td>
+                                <td class="text-right" id="Slope">{{b}}</td>
+                            </tr>
+                            <tr>
+                                <td>95% CI</td>
+                                <td class="text-right">{{b_lower}} to {{b_upper}}</td>
+                            </tr>
+                            <tr>
+                                <td>Cusum test for linearity</td>
+                                <td>No significant deviation from linearity(P&gt;0.1)</td>
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td colspan="2" style="width: 50%;">
+                        <div id="asc" style="width:150px;height:150px"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <p style="text-align: left;">
+                            评估总结(Evaluation Summary)：<br />
+
+                            本次实验中仪器比对结果合格，结果表明{{target}}和{{compare}}系统进行{{project}}检测没有显著性差异，{{compare}}能有效地进行{{project}}项目的检测工作。
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="border-right:hidden">调查者(Investigator)：{{researchname}}</td>
+                    <td colspan="2" style="border-left:hidden">日期(Date)：{{researchdate1}}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="border-right:hidden">学科主任(Section director)：{{director}}</td>
+                    <td colspan="2" style="border-left:hidden">日期(Date)：{{researchdate2}}
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+</body>
+
+</html>
+
+<script src="{% static 'report/content/echarts_min.js' %}"></script>
+
+<script>
+    var chartDom = document.getElementById('asc');
+    var myChart = echarts.init(chartDom);
+    var option;
+
+    option = {
+        xAxis: {},
+        yAxis: {},
+        series: [
+            {
+                symbolSize: 20,
+                data: [
+                    [10.0, 8.04],
+                    [8.07, 6.95],
+                    [13.0, 7.58]
+                ],
+                type: 'scatter'
+            }
+        ]
+    };
+
+    option && myChart.setOption(option);
+
+    function printPage() {
+
+        $(document).ready(function () {
+            //     document.getElementsByID("edit").removeAttribute("hidden");
+            document.body.style = "padding-top: 0mm;"; //打印时把首页上方边距调为0，必须点击打印按钮才可以
+            // document.getElementById("crrtr").style.marginTop = "200px;";
+            setTimeout("self.print();", 0);
+        });
+
+    };
+
+</script>
+
+<script>
+    $(document).ready(function () {
+        setTimeout("self.print();", 800);
+    });
+</script>

@@ -28,7 +28,7 @@
     <div class="container">
         <div class="row"> 
             {% if not Result.error_message %} 
-                <form action="{% url 'verifyagain' %}" method="POST" > 
+                <form action="{% url 'verifyagain' Lid %}" method="POST" > 
                     <!-- 1 验证基本信息展示 -->
                     <div class="basicinfo">
                         <!-- 标题 -->
@@ -288,7 +288,7 @@
                 </form>   
             {% else %}
                 <h2 class="alert alert-danger">{{Result.error_message}}</h2>
-                <form action="{% url 'verifyagain' %}" method="POST" > 
+                <form action="{% url 'verifyagain' Lid %}" method="POST" > 
                     <input hidden = "hidden" value="{{instrument_num}}" name="instrument_num">
                     <input hidden = "hidden" value="{{Detectionplatform}}" name="Detectionplatform">
                     <input hidden = "hidden" value="{{project}}" name="project">

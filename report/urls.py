@@ -54,7 +54,7 @@ urlpatterns=[
     path('crrsave', report.views.CRRsave, name="CRRsave"),
     path('SampleStabilitySave', report.views.Sample_Stability_Save, name="Sample_Stability_Save"),
     
-    path('verifyagain', report.views.verifyagain, name="verifyagain"),
+    path('verifyagain/<int:id>', report.views.verifyagain, name="verifyagain"),
     path('returnback', report.views.returnback, name="returnback"),
 
     # 流程表单
@@ -65,6 +65,49 @@ urlpatterns=[
 
     # 报告提交和审核
     path('submitcheck/<int:id>/<str:checklevel>', report.views.submitcheck, name="submitcheck"),
+
+
+
+    # 使用说明
+    path('instructions', report.views.instructions, name="instructions"),
+
+
+
+    # 仪器比对报告生成系统
+    path('ICS_index', report.views.ICS_index, name="ICS_index"),
+
+    # 定量项目仪器比对报告
+    path('ICS/QuantitativeReports', report.views.ICS_QuantitativeReports, name="ICS_QuantitativeReports"),
+
+    # 仪器比对报告生成系统 - 新建报告
+    path('ICS/QuantitativeReports/Create', report.views.ICS_QuantitativeReports_Create, name="ICS_QuantitativeReports_Create"),
+
+    # 仪器比对报告生成系统 - 新建报告 - 点击数据提交按钮后进入结果编辑页面
+    path('ICS/QuantitativeReports/Edit', report.views.ICS_QuantitativeReports_Edit, name="ICS_QuantitativeReports_Edit"),
+
+    # 仪器比对报告生成系统 - 新建报告 - 点击数据提交按钮后进入结果编辑页面
+    path('ICS/QuantitativeReports/Save', report.views.ICS_QuantitativeReports_Save, name="ICS_QuantitativeReports_Save"),
+
+    # 仪器比对报告生成系统 - 报告预览
+    path('ICS/QuantitativeReports/<int:id>/<str:operation>', report.views.ICS_QuantitativeReports_Operate, name="ICS_QuantitativeReports"),
+
+    # 仪器比对报告生成系统 - 报告删除
+    path('ICS/QuantitativeReports/delete/<int:id>', report.views.ICS_QuantitativeReports_Delete, name="ICS_QuantitativeReports_Delete"),
+
+    # 仪器比对报告生成系统 - 项目参数设置
+    path('ICS/ProjectParameters', report.views.ICS_ProjectParameters, name="ICS_ProjectParameters"),
+
+    # 仪器比对报告生成系统 - 新建参数设置
+    path('ICS/ProjectParameters/Create', report.views.ICS_ProjectParameters_Create, name="ICS_ProjectParameters_Create"),
+
+    # 仪器比对报告生成系统 - 项目参数设置 - 编辑
+    path('ICS/ProjectParameters/Edit/<int:id>', report.views.ICS_ProjectParameters_Edit, name="ICS_ProjectParameters_Edit"),
+
+    # 仪器比对报告生成系统 - 项目参数设置 - 编辑后保存
+    path('ICS/ProjectParameters/EditSave', report.views.ICS_ProjectParameters_EditSave, name="ICS_ProjectParameters_EditSave"),
+    
+    # 仪器比对报告生成系统 - 新建参数设置 - 保存
+    path('ICS/ProjectParameters/Save', report.views.ICS_ProjectParameters_Save, name="ICS_ProjectParameters_Save"),
 
     # path('upload', report.views.picture_upload, name="upload"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

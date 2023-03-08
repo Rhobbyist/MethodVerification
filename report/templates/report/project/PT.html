@@ -54,6 +54,9 @@
     }
 </style>
 
+<!-- 添加自定义模板过滤器标签 -->
+{% load myfilter %}
+
 <body>
     <div class="container">  
         <!-- 未返回报错信息  -->
@@ -119,6 +122,9 @@
 
                 <input hidden = "hidden" value="{{Result.templates}}" name="templates">
 
+                <!-- 报告编号  -->
+                <input hidden = "hidden" value="{{Result.Lid}}" name="Lid" id="Lid">
+
                 <!-- 2 分界线 -->
                 <h1 class="page-header"></h1>
 
@@ -133,7 +139,7 @@
                             <table border="1" cellpadding="8">
                                 <caption><h4>{{key}}验证结果</h4></caption>
                                 <tr class="PTtabletr">
-                                    <th rowspan="2">样本编号</th>
+                                    <th rowspan="2">样品编号</th>
                                     <th colspan="3">检测值({{Result.PTunit}})</th>
                                     <th rowspan="2">可接受区间下限<br/>({{Result.PTunit}})</th>
                                     <th rowspan="2">可接受区间上限<br/>({{Result.PTunit}})</th>
@@ -174,7 +180,7 @@
                             <table border="1" cellpadding="8">
                                 <caption><h4>{{key}}验证结果</h4></caption>
                                 <tr class="PT25OHDtabletr">
-                                    <th rowspan="2">样本编号</th>
+                                    <th rowspan="2">样品编号</th>
                                     <th colspan="3" style="width: 36%;">检测值({{Result.PTunit}})</th>
                                     <th rowspan="2">
                                         <!-- 靶值<br/>({{Result.PTunit}}) -->
@@ -227,125 +233,243 @@
                 {% else %}  
                     <!-- 第一种情况，未在后台管理系统设置可接受标准，调用模板1（可接受区间模板） -->  
                     {% if Result.templates == 1 %} 
-                        {%for key,value in Result.PT_dict.items %}        
-                            <table border="1" cellpadding="8">
-                                <caption><h4>{{key}}验证结果</h4></caption>
-                                <tr>
-                                    <th>样本编号</th>
-                                    <th>检测值({{Result.PTunit}})</th>
-                                    <th>可接受区间下限({{Result.PTunit}})</th>
-                                    <th>可接受区间上限({{Result.PTunit}})</th>
-                                    <th>是否通过</th>
-                                    <th>是否在报告中显示</th>
-                                </tr>
-                                {%for r in value %}
-                                <!-- 判断检测值是否小于loq -->
-                                    {% if "<" in r.1 %} 
-                                        <tr>
-                                            <td>{{r.0}}</td> 
-                                            <td><span class="conc">{{r.1}}</span></td>
-                                            <td><input class="lowaccept" type="text" style="border-style:none;text-align:center;" name="lowaccept{{forloop.counter}}" value="\" readonly></td>
-                                            <td><input class="upaccept" type="text" style="border-style:none;text-align:center;" name="upaccept{{forloop.counter}}" value="\" readonly></td>
-                                            <td><input class="pass" type="text" style="border-style:none;text-align:center;" name="pass{{forloop.counter}}" value="\" readonly></td>                               
-                                            <td>
-                                                <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
-                                                <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
-                                            </td>
-                                        </tr>
-                                    {% elif "N/A" in r.1 %}
-                                        <tr>
-                                            <td>{{r.0}}</td> 
-                                            <td><span class="conc">{{r.1}}</span></td>
-                                            <td><input class="lowaccept" type="text" style="border-style:none;text-align:center;" name="lowaccept{{forloop.counter}}" value="\" readonly></td>
-                                            <td><input class="upaccept" type="text" style="border-style:none;text-align:center;" name="upaccept{{forloop.counter}}" value="\" readonly></td>
-                                            <td><input class="pass" type="text" style="border-style:none;text-align:center;" name="pass{{forloop.counter}}" value="\" readonly></td>                               
-                                            <td>
-                                                <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
-                                                <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
-                                            </td>
-                                        </tr>
-                                    {% else %}
-                                        <tr>
-                                            <td>{{r.0}}</td> 
-                                            <td><span class="conc">{{r.1}}</span></td>
-                                            <td><input class="lowaccept" type="text" style="width:80px;" name="lowaccept{{forloop.counter}}" onkeydown="value=value.replace(/^\D*(\d*(?:\.\d{0,2})?).*$/g, '$1')" onkeyup="Templates1()"></td>
-                                            <td><input class="upaccept" type="text" style="width:80px;" name="upaccept{{forloop.counter}}" onkeydown="value=value.replace(/^\D*(\d*(?:\.\d{0,2})?).*$/g, '$1')" onkeyup="Templates1()"></td>
-                                            <td><input class="pass" type="text" style="border-style:none;text-align:center;" name="pass{{forloop.counter}}" readonly></td>                       
-                                            <td>
-                                                <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
-                                                <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
-                                            </td>
-                                        </tr>
-                                    {% endif %}
-                            {% endfor %}
-                            </table>
+                        {%for key,value in Result.PT_dict.items %}     
+                            {% if Result.diffunit == 1 %} 
+                                <table border="1" cellpadding="8">
+                                    <caption><h4>{{key}}验证结果</h4></caption>
+                                    <tr>
+                                        <th style="width: 20%;">样品编号</th>
+                                        <th>检测值({{Result.PTunit|get_index:forloop.counter}})</th>
+                                        <th>可接受区间下限({{Result.PTunit|get_index:forloop.counter}})</th>
+                                        <th>可接受区间上限({{Result.PTunit|get_index:forloop.counter}})</th>
+                                        <th>是否通过</th>
+                                        <th>是否在报告中显示</th>
+                                    </tr>
+                                    {%for r in value %}
+                                    <!-- 判断检测值是否小于loq -->
+                                        {% if "<" in r.1 %} 
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="lowaccept" type="text" style="border-style:none;text-align:center;" name="lowaccept{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="upaccept" type="text" style="border-style:none;text-align:center;" name="upaccept{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;" name="pass{{forloop.counter}}" value="\" readonly></td>                               
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% elif "N/A" in r.1 %}
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="lowaccept" type="text" style="border-style:none;text-align:center;" name="lowaccept{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="upaccept" type="text" style="border-style:none;text-align:center;" name="upaccept{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;" name="pass{{forloop.counter}}" value="\" readonly></td>                               
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="lowaccept" type="text" style="width:80px;" name="lowaccept{{forloop.counter}}" onkeydown="value=value.replace(/^\D*(\d*(?:\.\d{0,2})?).*$/g, '$1')" onkeyup="Templates1()"></td>
+                                                <td><input class="upaccept" type="text" style="width:80px;" name="upaccept{{forloop.counter}}" onkeydown="value=value.replace(/^\D*(\d*(?:\.\d{0,2})?).*$/g, '$1')" onkeyup="Templates1()"></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;" name="pass{{forloop.counter}}" readonly></td>                       
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                {% endfor %}
+                                </table>
+                            {% else %} 
+                                <table border="1" cellpadding="8">
+                                    <caption><h4>{{key}}验证结果</h4></caption>
+                                    <tr>
+                                        <th style="width: 20%;">样品编号</th>
+                                        <th>检测值({{Result.PTunit}})</th>
+                                        <th>可接受区间下限({{Result.PTunit}})</th>
+                                        <th>可接受区间上限({{Result.PTunit}})</th>
+                                        <th>是否通过</th>
+                                        <th>是否在报告中显示</th>
+                                    </tr>
+                                    {%for r in value %}
+                                    <!-- 判断检测值是否小于loq -->
+                                        {% if "<" in r.1 %} 
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="lowaccept" type="text" style="border-style:none;text-align:center;" name="lowaccept{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="upaccept" type="text" style="border-style:none;text-align:center;" name="upaccept{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;" name="pass{{forloop.counter}}" value="\" readonly></td>                               
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% elif "N/A" in r.1 %}
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="lowaccept" type="text" style="border-style:none;text-align:center;" name="lowaccept{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="upaccept" type="text" style="border-style:none;text-align:center;" name="upaccept{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;" name="pass{{forloop.counter}}" value="\" readonly></td>                               
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="lowaccept" type="text" style="width:80px;" name="lowaccept{{forloop.counter}}" onkeydown="value=value.replace(/^\D*(\d*(?:\.\d{0,2})?).*$/g, '$1')" onkeyup="Templates1()"></td>
+                                                <td><input class="upaccept" type="text" style="width:80px;" name="upaccept{{forloop.counter}}" onkeydown="value=value.replace(/^\D*(\d*(?:\.\d{0,2})?).*$/g, '$1')" onkeyup="Templates1()"></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;" name="pass{{forloop.counter}}" readonly></td>                       
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                {% endfor %}
+                                </table>
+                            {% endif %} 
                             <br>
                         {% endfor %} 
 
                     <!-- 第二种情况，在后台管理系统设置了可接受标准，调用模板2（可接受标准模板） -->
                     {% else %} 
-                        {%for key,value in Result.PT_dict.items %}        
-                            <table border="1" cellpadding="8" class="PTtable">
-                                <caption><h4>{{key}}验证结果</h4></caption>
-                                <tr class="PTtabletr">
-                                    <th>样本编号</th>
-                                    <th>检测值({{Result.PTunit}})</th>
-                                    <th>
-                                        <!-- 靶值({{Result.PTunit}}) -->
-                                        <select name="targetcolname" id="targetcolname">
-                                            <option>靶值({{Result.PTunit}})</option>
-                                            <option>中位值({{Result.PTunit}})</option>
-                                        </select>
-                                    </th>
-                                    <th>可接受标准</th>
-                                    <th>偏倚(%)或<br/>绝对差值({{Result.PTunit}})</th>
-                                    <th>是否通过</th>
-                                    <th>是否在报告中显示</th>
-                                </tr>
-                                {%for r in value %}
-                                    <!-- 判断检测值是否小于loq -->
-                                    {% if "<" in r.1 %} 
-                                        <tr>
-                                            <td>{{r.0}}</td> 
-                                            <td><span class="conc">{{r.1}}</span></td>
-                                            <td><input class="target" type="text" style="width:80px;" name="PTtarget{{forloop.counter}}" value="\" readonly></td>
-                                            <td><span class="rule">{{r.2}}</span></td>
-                                            <td><input class="bias" type="text" style="border-style:none;text-align:center;width:80px;" name="bias{{forloop.counter}}" value="\" readonly></td>
-                                            <td><input class="pass" type="text" style="border-style:none;text-align:center;width:80px;" name="pass{{forloop.counter}}" value="\" readonly></td>
-                                            <td>
-                                                <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
-                                                <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
-                                            </td>
-                                        </tr>
-                                    {% elif "N/A" in r.1 %}
-                                        <tr>
-                                            <td>{{r.0}}</td> 
-                                            <td><span class="conc">{{r.1}}</span></td>
-                                            <td><input class="target" type="text" style="width:80px;" name="PTtarget{{forloop.counter}}" value="\" readonly></td>
-                                            <td><span class="rule">{{r.2}}</span></td>
-                                            <td><input class="bias" type="text" style="border-style:none;text-align:center;width:80px;" name="bias{{forloop.counter}}" value="\" readonly></td>
-                                            <td><input class="pass" type="text" style="border-style:none;text-align:center;width:80px;" name="pass{{forloop.counter}}" value="\" readonly></td>
-                                            <td>
-                                                <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
-                                                <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
-                                            </td>
-                                        </tr>
-                                    {% else %}
-                                        <tr>
-                                            <td>{{r.0}}</td> 
-                                            <td><span class="conc">{{r.1}}</span></td>
-                                            <td><input class="target" type="text" style="width:80px;" name="PTtarget{{forloop.counter}}" onkeydown="value=value.replace(/^\D*(\d*(?:\.\d{0,2})?).*$/g, '$1')" onkeyup="Templates2()"></td>
-                                            <td><span class="rule">{{r.2}}</span></td>
-                                            <td><input class="bias" type="text" style="border-style:none;text-align:center;width:80px;" name="bias{{forloop.counter}}" readonly></td>    
-                                            <td><input class="pass" type="text" style="border-style:none;text-align:center;width:80px;" name="pass{{forloop.counter}}" readonly></td>                       
-                                            <td>
-                                                <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
-                                                <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
-                                            </td>
-                                        </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </table>
+                        {%for key,value in Result.PT_dict.items %}   
+                            {% if Result.diffunit == 1 %}      
+                                <table border="1" cellpadding="8" class="PTtable">
+                                    <caption><h4>{{key}}验证结果</h4></caption>
+                                    <tr class="PTtabletr">
+                                        <th>样本编号</th>
+                                        <th>检测值({{Result.PTunit|get_index:forloop.counter}})</th>
+                                        <th>
+                                            <!-- 靶值({{Result.PTunit|get_index:forloop.counter}}) -->
+                                            <select name="targetcolname" id="targetcolname">
+                                                <option>靶值({{Result.PTunit|get_index:forloop.counter}})</option>
+                                                <option>中位值({{Result.PTunit|get_index:forloop.counter}})</option>
+                                            </select>
+                                        </th>
+                                        <th>可接受标准</th>
+                                        <th>偏倚(%)或<br/>绝对差值({{Result.PTunit|get_index:forloop.counter}})</th>
+                                        <th>是否通过</th>
+                                        <th>是否在报告中显示</th>
+                                    </tr>
+                                    {%for r in value %}
+                                        <!-- 判断检测值是否小于loq -->
+                                        {% if "<" in r.1 %} 
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="target" type="text" style="width:80px;" name="PTtarget{{forloop.counter}}" value="\" readonly></td>
+                                                <td><span class="rule">{{r.2}}</span></td>
+                                                <td><input class="bias" type="text" style="border-style:none;text-align:center;width:80px;" name="bias{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;width:80px;" name="pass{{forloop.counter}}" value="\" readonly></td>
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% elif "N/A" in r.1 %}
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="target" type="text" style="width:80px;" name="PTtarget{{forloop.counter}}" value="\" readonly></td>
+                                                <td><span class="rule">{{r.2}}</span></td>
+                                                <td><input class="bias" type="text" style="border-style:none;text-align:center;width:80px;" name="bias{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;width:80px;" name="pass{{forloop.counter}}" value="\" readonly></td>
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="target" type="text" style="width:80px;" name="PTtarget{{forloop.counter}}" onkeydown="value=value.replace(/^\D*(\d*(?:\.\d{0,2})?).*$/g, '$1')" onkeyup="Templates2()"></td>
+                                                <td><span class="rule">{{r.2}}</span></td>
+                                                <td><input class="bias" type="text" style="border-style:none;text-align:center;width:80px;" name="bias{{forloop.counter}}" readonly></td>    
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;width:80px;" name="pass{{forloop.counter}}" readonly></td>                       
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </table>
+                            {% else %} 
+                                <table border="1" cellpadding="8" class="PTtable">
+                                    <caption><h4>{{key}}验证结果</h4></caption>
+                                    <tr class="PTtabletr">
+                                        <th>样本编号</th>
+                                        <th>检测值({{Result.PTunit}})</th>
+                                        <th>
+                                            <!-- 靶值({{Result.PTunit}}) -->
+                                            <select name="targetcolname" id="targetcolname">
+                                                <option>靶值({{Result.PTunit}})</option>
+                                                <option>中位值({{Result.PTunit}})</option>
+                                            </select>
+                                        </th>
+                                        <th>可接受标准</th>
+                                        <th>偏倚(%)或<br/>绝对差值({{Result.PTunit}})</th>
+                                        <th>是否通过</th>
+                                        <th>是否在报告中显示</th>
+                                    </tr>
+                                    {%for r in value %}
+                                        <!-- 判断检测值是否小于loq -->
+                                        {% if "<" in r.1 %} 
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="target" type="text" style="width:80px;" name="PTtarget{{forloop.counter}}" value="\" readonly></td>
+                                                <td><span class="rule">{{r.2}}</span></td>
+                                                <td><input class="bias" type="text" style="border-style:none;text-align:center;width:80px;" name="bias{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;width:80px;" name="pass{{forloop.counter}}" value="\" readonly></td>
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% elif "N/A" in r.1 %}
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="target" type="text" style="width:80px;" name="PTtarget{{forloop.counter}}" value="\" readonly></td>
+                                                <td><span class="rule">{{r.2}}</span></td>
+                                                <td><input class="bias" type="text" style="border-style:none;text-align:center;width:80px;" name="bias{{forloop.counter}}" value="\" readonly></td>
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;width:80px;" name="pass{{forloop.counter}}" value="\" readonly></td>
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td>{{r.0}}</td> 
+                                                <td><span class="conc">{{r.1}}</span></td>
+                                                <td><input class="target" type="text" style="width:80px;" name="PTtarget{{forloop.counter}}" onkeydown="value=value.replace(/^\D*(\d*(?:\.\d{0,2})?).*$/g, '$1')" onkeyup="Templates2()"></td>
+                                                <td><span class="rule">{{r.2}}</span></td>
+                                                <td><input class="bias" type="text" style="border-style:none;text-align:center;width:80px;" name="bias{{forloop.counter}}" readonly></td>    
+                                                <td><input class="pass" type="text" style="border-style:none;text-align:center;width:80px;" name="pass{{forloop.counter}}" readonly></td>                       
+                                                <td>
+                                                    <input class="checkedsubmit" type="checkbox" style="border-style:none;text-align:center;" checked>
+                                                    <input type="hidden" style="border-style:none;text-align:center;" name="show{{forloop.counter}}" value="1">
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </table>
+                            {% endif %} 
                             <br>
                         {% endfor %} 
                     {% endif %}  
@@ -357,7 +481,7 @@
         <!-- 返回报错信息  --> 
         {% else %}
             <h2 class="alert alert-danger">{{Result.error_message}}</h2>
-            <form action="{% url 'verifyagain' %}" method="POST" > 
+            <form action="{% url 'verifyagain' Lid %}" method="POST" > 
                 <input hidden = "hidden" value="{{instrument_num}}" name="instrument_num">
                 <input hidden = "hidden" value="{{Detectionplatform}}" name="Detectionplatform">
                 <input hidden = "hidden" value="{{project}}" name="project">

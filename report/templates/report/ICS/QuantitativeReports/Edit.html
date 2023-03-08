@@ -1,0 +1,713 @@
+{% extends "report/ICS/index.html" %}
+{% block content %}
+
+<style>
+    /* 页眉页脚
+-------------------------------------------------- */
+    /**/
+    /*@media print {*/
+    /*body * {
+        visibility: hidden;
+    }
+
+    #section-to-print, #section-to-print * {
+        visibility: visible;
+    }
+
+    #section-to-print {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }*/
+
+    /*.d-print-none {
+        display: none
+    }*/
+    /*}*/
+
+    @page {
+        size: A4;
+        margin-top: 40mm;
+
+        @top-left-corner {
+            content: url("/logo.png");
+            padding-left: 50px;
+        }
+
+        @top-center {
+            content: element(titleRunning);
+        }
+
+        @bottom-left {
+            content: element(footRunning);
+        }
+
+        @bottom-right {
+            content: 'Page ' counter(page) '/' counter(pages);
+        }
+    }
+
+    p.title {
+        position: running(titleRunning);
+        overflow: visible;
+        white-space: nowrap;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    p.foot {
+        position: running(footRunning);
+        overflow: visible;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+
+    body {
+        font-family: 'Times New Roman', Times, serif;
+    }
+
+    div.front-page {
+        break-after: page;
+    }
+
+    .d-print-none {
+        display: none;
+    }
+
+    h1 {
+        padding-top: 20px;
+        padding-bottom: 20px;
+        text-align: center;
+    }
+
+    h2 {
+        padding-top: 15px;
+        text-align: center;
+    }
+
+    table {
+        width: 100%;
+        border: 1px solid;
+        border-collapse: collapse;
+    }
+
+
+    .table th,
+    .table td {
+        vertical-align: central;
+        border: 1px solid;
+    }
+
+    /* Seems to create an empty row in my table at the end of each page：
+    https://gitlab.pagedmedia.org/tools/pagedjs/issues/240 */
+    tr {
+        break-inside: avoid;
+    }
+
+    .text-right {
+        text-align: right !important;
+    }
+
+    .text-center {
+        text-align: center !important;
+    }
+
+
+    .col-1,
+    .col-2,
+    .col-3,
+    .col-4,
+    .col-5,
+    .col-6,
+    .col-7,
+    .col-8,
+    .col-9,
+    .col-10,
+    .col-11,
+    .col-12,
+    .col,
+    .col-auto,
+    .col-sm-1,
+    .col-sm-2,
+    .col-sm-3,
+    .col-sm-4,
+    .col-sm-5,
+    .col-sm-6,
+    .col-sm-7,
+    .col-sm-8,
+    .col-sm-9,
+    .col-sm-10,
+    .col-sm-11,
+    .col-sm-12,
+    .col-sm,
+    .col-sm-auto,
+    .col-md-1,
+    .col-md-2,
+    .col-md-3,
+    .col-md-4,
+    .col-md-5,
+    .col-md-6,
+    .col-md-7,
+    .col-md-8,
+    .col-md-9,
+    .col-md-10,
+    .col-md-11,
+    .col-md-12,
+    .col-md,
+    .col-md-auto,
+    .col-lg-1,
+    .col-lg-2,
+    .col-lg-3,
+    .col-lg-4,
+    .col-lg-5,
+    .col-lg-6,
+    .col-lg-7,
+    .col-lg-8,
+    .col-lg-9,
+    .col-lg-10,
+    .col-lg-11,
+    .col-lg-12,
+    .col-lg,
+    .col-lg-auto,
+    .col-xl-1,
+    .col-xl-2,
+    .col-xl-3,
+    .col-xl-4,
+    .col-xl-5,
+    .col-xl-6,
+    .col-xl-7,
+    .col-xl-8,
+    .col-xl-9,
+    .col-xl-10,
+    .col-xl-11,
+    .col-xl-12,
+    .col-xl,
+    .col-xl-auto {
+        position: relative;
+        width: 100%;
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+
+    p {
+        margin: 0px;
+    }
+
+    .table-active td {
+        font-weight: 900;
+    }
+
+    input {
+        border: 0.5px black solid;
+    }
+
+    input:focus {
+        border-color: #66afe9;
+        outline: 0;
+        -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6)
+    }
+
+    /* input框设置为number类型时,去除右侧的箭头 */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+    }
+
+    .ID{
+        margin-left: 300px;
+    }
+
+    .annotation{
+        font-size: 2px;
+        color:gainsboro;
+    }
+
+</style>
+
+{% load static %}
+{% load myfilter %}
+
+
+<body>
+    <input hidden="hidden" value={{a_lower}} id="Intercept_lower">
+    <input hidden="hidden" value={{a_upper}} id="Intercept_upper">
+    <input hidden="hidden" value={{b_lower}} id="Slope_lower">
+    <input hidden="hidden" value={{b_upper}} id="Slope_upper">
+
+    <form action="{% url 'ICS_QuantitativeReports_Save' %}" method="POST" enctype="multipart/form-data">
+        <input hidden="hidden" type="text" name="resultA" value="{{Astr}}">
+        <input hidden="hidden" type="text" name="resultB" value="{{Bstr}}">
+        <input hidden="hidden" type="text" name="samplename" value="{{ID}}">
+        <input hidden="hidden" type="text" name="bias" value="{{absbiasstr}}">
+        <div class="front-page">
+            <h1>Results comparison of same test item on different testing system and Report</h1>
+            <h1>同一检测项目不同检测系统结果比对报告</h1>
+            <br>
+            <h2>比对项目名称：<input type="text" name="project" value={{project}} style="border:none;" readonly></h2>
+            <h2>检测系统A：<input type="text" name="target" value={{target}} style="border:none;" readonly></h2>
+            <h2>检测系统B：<input type="text" name="compare" value={{compare}} style="border:none;" readonly></h2>
+            <h2>上次验证时间：
+                <input type="month" name="lastdate" required>
+            </h2>
+            <br>
+            <h2 class="ID">
+                Protocol ID：<input type="text" name="english_code" required>
+                <span class="annotation">填写格式：仪器种类-仪器编号-项目名称-日期</span>
+            </h2>
+            <h2 class="ID">
+                代码：<input type="text" name="chinese_code" required>
+                <span class="annotation">填写格式：仪器种类-仪器编号-项目名称-日期</span>
+            </h2>
+        </div>
+
+        <div class="content">
+            <h3>一、比对目的:</h3>
+            <p><textarea type="text" rows="1" cols="50" name="compare_goal" placeholder="请输入比对目的..." required></textarea></p>
+            <h3>
+                二、比对结果:
+                <span id="result">通过！</span>
+            </h3>
+                
+            <h3>三、比对数据:</h3>
+            {% if outerID %} 
+                <h3 style="color: red;">警告：发现以下离群值{{outerID}}</h3>
+            {% else %}
+                
+            {% endif %}
+            <div id="Report">
+                <div>
+                    <h3 class="h3 text-center">同一检测项目不同检测系统/方法的比对结果登记表</h3>
+                </div>
+
+                <div class="row">
+                    <p class="col-md-12 text-right">表号：GZKM-SOP03.22.01</p>
+                </div>
+
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td colspan="3" style="border-top: 1px solid black;">
+                                比对项目名称：{{project}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="26%"></td>
+                            <td class="text-center" width="37%">检测系统A</td>
+                            <td class="text-center" width="37">检测系统B</td>
+                        </tr>
+                        <tr>
+                            <td>检测设备或检测方法：</td>
+                            <td class="text-center" id="target">{{target}}</td>
+                            <td class="text-center" id="compare">{{compare}}</td>
+                        </tr>
+                        <tr>
+                            <td>检测试剂/批号：</td>
+                            <td class="text-center"><input type="text" name="reagent" required></td>
+                            <td class="text-center"><input type="text" name="batch" required></td>
+                        </tr>
+                        <tr>
+                            <td style="border: none;">检测日期：<input type="text" name="testdate" required></td>
+                            <td class="text-center" style="border: none;">评估日期：<input type="date" name="assessdate" required></td>
+                            <td class="text-center" style="border: none;">检测人员：<input type="text" name="testname" required></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table class="table">
+                    <thead>
+                        <tr class="table-active text-center">
+                            <td>样品编号</td>
+                            <td>检测系统A结果(ug/L)</td>
+                            <td>检测系统B结果(ug/L)</td>
+                            <td>偏倚/一致性判断</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                        {% for item in A %}
+                            <tr class="result text-center">
+                                <td width="25%">{{ID|get_index:forloop.counter}}</td>
+                                <td width="25%" class="dataA">{{Astr|get_index:forloop.counter}}</td>
+                                <td width="25%" class="dataB">{{Bstr|get_index:forloop.counter}}</td>
+                                {% if A|get_index:forloop.counter <= criteria1_range %} 
+                                    {% if absbias|get_index:forloop.counter <= criteria1 %} 
+                                        <td width="25%">{{absbiasstr|get_index:forloop.counter}} / Y</td>
+                                    {% else %}
+                                        <td width="25%">{{absbiasstr|get_index:forloop.counter}} / N</td>
+                                    {% endif %}
+                                {% else %}
+                                    {% if absbias|get_index:forloop.counter <= criteria2 %} 
+                                        <td width="25%">{{absbiasstr|get_index:forloop.counter}}% / Y</td>
+                                    {% else %}
+                                        <td width="25%">{{absbiasstr|get_index:forloop.counter}}% / N</td>
+                                    {% endif %}
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <table class="table">
+                    <tbody>
+
+                        <tr>
+                            <td colspan="4" style="border-top: 1px solid black;">
+                                不同检测系统结果比对分析：<br />
+                                回归方程为 y = {{a}} + {{b}} x，
+                                斜率b的95%置信区间为（{{b_lower}} ~ {{b_upper}}），
+                                截距a的95%置信区间为（{{a_lower}} ~ {{a_upper}}）。
+
+                                代入医学决定水平值Xc1={{level1}}算出Y为{{Y1}}
+                                （Y的置信区间为{{Y1_lower}} ~ {{Y1_upper}}），
+                                最大SE/Xc%为{{SE1_XCstr}}%，
+
+                                {% if SE1_XC < HalfALE %} 
+                                    <span>小于1/2ALE {{HalfALE}}%。</span>
+                                {% else %}
+                                    <span>大于1/2ALE {{HalfALE}}%。</span>
+                                {% endif %}
+
+                                {% if SE1_XC != SE2_XC %} 
+                                    代入医学决定水平值Xc2={{level2}}算出Y为{{Y2}}
+                                    （Y的置信区间为{{Y2_lower}} ~ {{Y2_upper}}），
+                                    最大SE/Xc%为{{SE2_XCstr}}%，
+                                    
+                                    {% if SE2_XC < HalfALE %} 
+                                        <span>小于1/2ALE {{HalfALE}}%。</span>
+                                    {% else %}
+                                        <span>大于1/2ALE {{HalfALE}}%。</span>
+                                    {% endif %}
+                                {% else %}
+                                    
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr style="page-break-inside:avoid">
+                            <td colspan="2" width="50%">
+                                <table>
+                                    <tr>
+                                        <td style="border-top: 1px solid black;">Variable X</td>
+                                        <td style="border-top: 1px solid black;">{{target}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Variable Y</td>
+                                        <td>{{compare}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sample size</td>
+                                        <td>{{samplesize}}</td>
+                                    </tr>
+                                </table>
+                                <table>
+                                    <tr>
+                                        <td width="44%"></td>
+                                        <td width="28%" class="text-center">Variable X</td>
+                                        <td width="28%" class="text-center">Variable Y</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Lowest value</td>
+                                        <td class="text-center">{{lowestA}}</td>
+                                        <td class="text-center">{{lowestB}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Highest value</td>
+                                        <td class="text-center">{{highestA}}</td>
+                                        <td class="text-center">{{highestB}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Arithmetic mean</td>
+                                        <td class="text-center">{{meanA}}</td>
+                                        <td class="text-center">{{meanB}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Median</td>
+                                        <td class="text-center">{{medianA}}</td>
+                                        <td class="text-center">{{medianB}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Standard deviation</td>
+                                        <td class="text-center">{{sdA}}</td>
+                                        <td class="text-center">{{sdB}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Standard error of the mean</td>
+                                        <td class="text-center">{{seA}}</td>
+                                        <td class="text-center">{{seB}}</td>
+                                    </tr>
+                                </table>
+
+                                <table>
+                                    <tr>
+                                        <td colspan="2">Regression Equation</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" id="regression">y = {{a}} + {{b}} x</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Intercept A</td>
+                                        <td class="text-right" id="Intercept">{{a}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>95% CI</td>
+                                        <td class="text-right">{{a_lower}} to {{a_upper}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Slope B</td>
+                                        <td class="text-right" id="Slope">{{b}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>95% CI</td>
+                                        <td class="text-right">{{b_lower}} to {{b_upper}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Cusum test for linearity</td>
+                                        <td>No significant deviation from linearity(P&gt;0.1)</td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td colspan="2" width="50%">
+                                <div id="tester" style="width:650px;height:650px;"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4">
+                                <p>
+                                    评估总结(Evaluation Summary)：<br />
+
+                                    本次实验中仪器比对结果合格，结果表明{{target}}和{{compare}}系统进行{{project}}检测没有显著性差异，{{compare}}能有效地进行{{project}}项目的检测工作。
+                                </p>
+                            </td>
+                        </tr>
+                        <tr class="d-print-none">
+                            <td colspan="4">
+                                <p>
+                                    备注(Remark)：<br />
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="border-right:hidden">调查者(Investigator)：<input type="text" name="researchname" required></td>
+                            <td colspan="2" style="border-left:hidden">日期(Date)：<input type="date" name="researchdate1" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="border-right:hidden">学科主任(Section director)：
+                                <!-- <input type="text" name="director" value="董衡" required> -->
+                                <select class="form-control" name="director" style="width: 150px;height: 30px;;display: inline;">
+                                    <option selected>董衡</option>
+                                    <option>李卓阳</option>
+                                </select>
+                            </td>
+                            <td colspan="2" style="border-left:hidden">日期(Date)：<input type="date" name="researchdate2" disabled>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div><input type="submit" value="保存" class="btn btn-primary" /></div>
+    </form>
+
+    <!-- <script src="{% static 'report/content/jquery-1.10.2.min.js' %}"></script>
+    <script src="{% static 'report/content/paged.polyfill.js' %}"></script>
+    <script>
+        $(document).ready(function () {
+            setTimeout("self.print();", 800);
+        });
+    </script> -->
+</body>
+
+<script>
+    var chartDom = document.getElementById('tester');
+    // var myChart = echarts.init(chartDom);
+    var myChart = echarts.init(chartDom,null,{renderer:"svg"});  // 增加图片清晰度
+    var option;
+
+    var arrayA = document.getElementsByClassName("dataA")
+    var arrayB = document.getElementsByClassName("dataB")
+
+    // 回归方程
+    var regression = document.getElementById("regression")
+    var arrayplot = [];
+    var arrayAnum = [];
+    var arrayBnum = [];
+    for (var i = 0; i < arrayA.length; i++) {
+        var middlearray = [];
+        middlearray.push(parseFloat(arrayA[i].innerHTML))
+        middlearray.push(parseFloat(arrayB[i].innerHTML))
+        arrayAnum.push(parseFloat(arrayA[i].innerHTML))
+        arrayBnum.push(parseFloat(arrayB[i].innerHTML))
+        arrayplot.push(middlearray)
+    }
+
+    if (Math.max.apply(null, arrayAnum) <= 1) {
+        MaxarrayAnum = (Math.max.apply(null, arrayAnum) * 1.05).toFixed(2)
+        MaxarrayBnum = (Math.max.apply(null, arrayBnum) * 1.05).toFixed(2)
+    } else {
+        MaxarrayAnum = Math.ceil(Math.max.apply(null, arrayAnum) * 1.05)
+        MaxarrayBnum = Math.ceil(Math.max.apply(null, arrayBnum) * 1.05)
+    }
+
+
+    Maxaxis = Math.max.apply(null, [MaxarrayAnum,MaxarrayBnum])
+
+
+    // 拟合曲线
+    var Intercept = document.getElementById("Intercept")
+    var Slope = document.getElementById("Slope")
+    Interceptnum = parseFloat(Intercept.innerHTML)
+    Slopenum = parseFloat(Slope.innerHTML)
+
+    if(Slopenum * 0 + Interceptnum < 0){
+        coordline_1 = [0, 0]
+    } else {
+        coordline_1 = [0, Slopenum * 0 + Interceptnum]
+    }
+    
+    coordline_2 = [Math.max.apply(null, arrayAnum), Slopenum * Math.max.apply(null, arrayAnum) + Interceptnum]
+
+
+    // 曲线置信区间上侧
+    var Intercept_upper = document.getElementById("Intercept_upper")
+    var Slope_upper = document.getElementById("Slope_upper")
+    Interceptnum_upper = parseFloat(Intercept_upper.value)
+    Slopenum_upper = parseFloat(Slope_upper.value)
+
+    if(Slopenum_upper * 0 + Interceptnum_upper){
+        coordlineupper_1 = [0, 0]
+    } else {
+        coordlineupper_1 = [0, Slopenum_upper * 0 + Interceptnum_upper]
+    }
+
+    // coordlineupper_1 = [0, Slopenum_upper * 0 + Interceptnum_upper]
+    coordlineupper_2 = [Math.max.apply(null, arrayAnum), Slopenum_upper * Math.max.apply(null, arrayAnum) + Interceptnum_upper]
+
+
+
+    // 曲线置信区间下侧
+    var Intercept_lower = document.getElementById("Intercept_lower")
+    var Slope_lower = document.getElementById("Slope_lower")
+    Interceptnum_lower = parseFloat(Intercept_lower.value)
+    Slopenum_lower = parseFloat(Slope_lower.value)
+
+    if(Slopenum_lower * 0 + Interceptnum_lower){
+        coordlinelower_1 = [0, 0]
+    } else {
+        coordlinelower_1 = [0, Slopenum_lower * 0 + Interceptnum_lower]
+    }
+
+    coordlinelower_2 = [Math.max.apply(null, arrayAnum), Slopenum_lower * Math.max.apply(null, arrayAnum) + Interceptnum_lower]
+
+
+    // 轴标题
+    var target = document.getElementById("target")
+    var compare = document.getElementById("compare")
+
+    const markLineOpt = {
+        animation: false,
+        // label: {
+        //     formatter: regression.innerHTML,
+        //     align: 'right'
+        // },
+        lineStyle: {
+            type: 'solid',
+            color: 'red'
+        },
+        tooltip: {
+            formatter: regression.innerHTML
+        },
+        data: [
+            [
+                {
+                    coord: coordline_1,
+                    symbol: 'none'
+                },
+                {
+                    coord: coordline_2,
+                    symbol: 'none'
+                }
+            ],
+            [
+                {
+                    coord: coordlineupper_1,
+                    symbol: 'none'
+                },
+                {
+                    coord: coordlineupper_2,
+                    symbol: 'none',
+                    lineStyle: {
+                        color: 'green',
+                        type:'dotted'
+                    },
+                    label: {
+                        formatter: ''
+                    },
+                }
+            ],
+            [
+                {
+                    coord: coordlinelower_1,
+                    symbol: 'none'
+                },
+                {
+                    coord: coordlinelower_2,
+                    symbol: 'none',
+                    lineStyle: {
+                        color: 'green',
+                        type:'dotted'
+                    },
+                    label: {
+                        formatter: ''
+                    },
+                }
+            ],
+        ]
+    };
+
+    option = {
+        xAxis: {
+            splitLine:{
+                show:false
+            },
+            name:target.innerHTML,
+            nameLocation: "center",
+            nameGap: 30,
+            min:0,
+            max:Maxaxis
+        },
+        yAxis: {
+            splitLine:{
+                show:false
+            },
+            name:compare.innerHTML,
+            nameLocation: "center",
+            nameGap: 30,
+            min:0,
+            max:Maxaxis
+        },
+        grid: {
+            top: '50px',
+            left: '50px',
+            right: '20px',
+            bottom: '50px',
+        },
+        series: [
+            {
+                symbolSize: 4,
+                data: arrayplot,
+                type: 'scatter',
+                markLine: markLineOpt
+            }
+        ]
+    };
+
+    option && myChart.setOption(option);
+
+
+</script>
+
+
+
+{% endblock %}

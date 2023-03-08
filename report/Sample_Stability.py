@@ -240,6 +240,11 @@ def store_fileread(files, namestability,Detectionplatform,reportinfo, project, p
                         # txt数据抓取，content[行索引][列索引]
                         for i in range(len(content)):
                               if content[i][0] == "Name":  # 如果某一行第一列为"Name"，则该行第二列为化合物名称
+                                    # # 若化合物名称后含有“-”，需切除
+                                    # if "-" in content[i][1]:
+                                    #     norm.append(content[i][1].split("-")[0])
+                                    # else:
+                                    #     norm.append(content[i][1])
                                     norm.append(content[i][1])
                                     norm_row.append(i)
                         

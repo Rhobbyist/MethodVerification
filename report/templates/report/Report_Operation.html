@@ -1059,7 +1059,7 @@
                                                 <table class="PT_Table" cellpadding="4">
                                                     <caption>表{{forloop.counter|add:tablePTindex_start|add:-1}}. {{key}}室间质量评价实验数据</caption>
                                                     <tr class="PT_Tabletr">
-                                                        <th width="20%">样本编号</th>
+                                                        <th width="20%">样品编号</th>
                                                         <th width="20%">检测值<br />({{Unitdict|get_item:key|default:unit}})</th>
                                                         <th width="20%">可接受区间下限<br />({{Unitdict|get_item:key|default:unit}})</th>
                                                         <th width="20%">可接受区间上限<br />({{Unitdict|get_item:key|default:unit}})</th>
@@ -1084,7 +1084,7 @@
                                                     <table class="PT_Table" cellpadding="4">
                                                         <caption>表{{forloop.counter|add:tablePTindex_start|add:-1}}. {{key}}室间质量评价实验数据</caption>
                                                         <tr class="PT_Tabletr">
-                                                            <th rowspan="2">样本编号</th>
+                                                            <th rowspan="2">样品编号</th>
                                                             <th colspan="3" width="45%">检测值<br />({{Unitdict|get_item:key|default:unit}})</th>
                                                             <th rowspan="2">靶值<br />({{Unitdict|get_item:key|default:unit}})</th>
                                                             <th rowspan="2">可接受标准</th>
@@ -1120,7 +1120,7 @@
                                                     <table class="PT_Table" cellpadding="4">
                                                         <caption>表{{forloop.counter|add:tablePTindex_start|add:-1}}. {{key}}室间质量评价实验数据</caption>
                                                         <tr class="PT_Tabletr">
-                                                            <th width="20%">样本编号</th>
+                                                            <th width="20%">样品编号</th>
                                                             <th width="20%">检测值<br />({{Unitdict|get_item:key|default:unit}})</th>
                                                             {% if PT_data.targetcolname != "" %}
                                                                 <th width="20%">{{PT_data.targetcolname}}</th>
@@ -1179,16 +1179,16 @@
                                             <table class="Recycle_Table" cellpadding="4">
                                                 <caption>表{{forloop.counter|add:tableRecycleindex_start|add:"-1"}}.{{key}}加标回收率实验数据</caption>
                                                 <tr class="Recycle_Tabletr">
-                                                    <th colspan="3" width="43%">病人基质样本</th>
+                                                    <th colspan="3" width="43%">本底样品</th>
                                                     <th rowspan="2" width="17%">加标理论值<br />({{Unitdict|get_item:key|default:unit}})</th>
-                                                    <th colspan="2" width="28%">加标后样本</th>
+                                                    <th colspan="2" width="28%">加标后样品</th>
                                                     <th rowspan="2" width="12%">回收率(%)</th>
                                                 </tr>
                                                 <tr class="Recycle_Tabletr">
-                                                    <th width="15%">样本编号</th>
+                                                    <th width="15%">样品编号</th>
                                                     <th width="15%">平行检测浓度<br />({{Unitdict|get_item:key|default:unit}})</th>
                                                     <th width="15%">均值<br />({{Unitdict|get_item:key|default:unit}})</th>
-                                                    <th width="15%">样本编号</th>
+                                                    <th width="15%">样品编号</th>
                                                     <th width="15%">平行检测浓度<br />({{Unitdict|get_item:key|default:unit}})</th>
                                                 </tr>
                                                 {%for c,r in value.items %}
@@ -1376,6 +1376,33 @@
                                                         </div>
                                                     </div>
                                                 {% endif %} 
+                                            {% elif key == "ARI" %}
+                                                {% if key in obj.name and "DARI" not in obj.name %}
+                                                    <div class="LOQ_picture">
+                                                        <div><img src="/media/{{ obj.img }}" alt="" width="500px" height="300px"></div>
+                                                        <div class="LOQ_picture_title">
+                                                            图{{forloop.counter}}.{{obj.name}}
+                                                        </div>
+                                                    </div>
+                                                {% endif %} 
+                                            {% elif key == "T" %}
+                                                {% if key in obj.name and "DHT" not in obj.name %}
+                                                    <div class="LOQ_picture">
+                                                        <div><img src="/media/{{ obj.img }}" alt="" width="500px" height="300px"></div>
+                                                        <div class="LOQ_picture_title">
+                                                            图{{forloop.counter}}.{{obj.name}}
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% elif key == "F" %}
+                                                {% if key in obj.name and "11-DF" not in obj.name and "21-DF" not in obj.name %}
+                                                    <div class="LOQ_picture">
+                                                        <div><img src="/media/{{ obj.img }}" alt="" width="500px" height="300px"></div>
+                                                        <div class="LOQ_picture_title">
+                                                            图{{forloop.counter}}.{{obj.name}}
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
                                             {% else %}
                                                 {% if key in obj.name %}
                                                     <div class="LOQ_picture">
@@ -1659,14 +1686,14 @@
                                                         <!-- 单指标项目和多指标项目，每个验证指标结论中的表格索引不同 -->
                                                         {% if Number_of_compounds == 1 %}
                                                             <div class="maintext"> {{Dilution_data.serial | add:-1}})
-                                                                实验结果如表{{tableDilutionindex_start}}所示，对高浓度样本按照
-                                                                {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样本时，可对其稀释
+                                                                实验结果如表{{tableDilutionindex_start}}所示，对高浓度样品按照
+                                                                {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样品时，可对其稀释
                                                                 {{Dilution_data.CRR_conclusion1}}倍后进行检测。
                                                             </div>
                                                         {% else %}
                                                             <div class="maintext"> {{Dilution_data.serial | add:-1}})
-                                                                实验结果如表{{tableDilutionindex_start}}-{{tableDilutionindex_end}}所示，对高浓度样本按照
-                                                                {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样本时，可对其稀释
+                                                                实验结果如表{{tableDilutionindex_start}}-{{tableDilutionindex_end}}所示，对高浓度样品按照
+                                                                {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样品时，可对其稀释
                                                                 {{Dilution_data.CRR_conclusion1}}倍后进行检测。
                                                             </div>
                                                         {% endif %}
@@ -1737,14 +1764,14 @@
                                                         <!-- 单指标项目和多指标项目，每个验证指标结论中的表格索引不同 -->
                                                         {% if Number_of_compounds == 1 %}
                                                             <div class="maintext"> {{Dilution_data.serial}})
-                                                                实验结果如表{{tableDilutionindex_start}}所示，对高浓度样本按照
-                                                                {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样本时，可对其稀释
+                                                                实验结果如表{{tableDilutionindex_start}}所示，对高浓度样品按照
+                                                                {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样品时，可对其稀释
                                                                 {{Dilution_data.CRR_conclusion1}}倍后进行检测。
                                                             </div>
                                                         {% else %}
                                                             <div class="maintext"> {{Dilution_data.serial}})
-                                                                实验结果如表{{tableDilutionindex_start}}-{{tableDilutionindex_end}}所示，对高浓度样本按照
-                                                                {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样本时，可对其稀释
+                                                                实验结果如表{{tableDilutionindex_start}}-{{tableDilutionindex_end}}所示，对高浓度样品按照
+                                                                {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样品时，可对其稀释
                                                                 {{Dilution_data.CRR_conclusion1}}倍后进行检测。
                                                             </div>
                                                         {% endif %}
@@ -1815,14 +1842,14 @@
                                             <!-- 单指标项目和多指标项目，每个验证指标结论中的表格索引不同 -->
                                             {% if Number_of_compounds == 1 %}
                                                 <div class="maintext"> {{Dilution_data.serial}})
-                                                    实验结果如表{{tableDilutionindex_start}}所示，对高浓度样本按照
-                                                    {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样本时，可对其稀释
+                                                    实验结果如表{{tableDilutionindex_start}}所示，对高浓度样品按照
+                                                    {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样品时，可对其稀释
                                                     {{Dilution_data.CRR_conclusion1}}倍后进行检测。
                                                 </div>
                                             {% else %}
                                                 <div class="maintext"> {{Dilution_data.serial}})
-                                                    实验结果如表{{tableDilutionindex_start}}-{{tableDilutionindex_end}}所示，对高浓度样本按照
-                                                    {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样本时，可对其稀释
+                                                    实验结果如表{{tableDilutionindex_start}}-{{tableDilutionindex_end}}所示，对高浓度样品按照
+                                                    {{Dilution_data.CRR_conclusion1}}倍稀释后得到的检测结果满足要求。 因此，当遇到超出标准曲线最高浓度点的样品时，可对其稀释
                                                     {{Dilution_data.CRR_conclusion1}}倍后进行检测。
                                                 </div>
                                             {% endif %}
@@ -1896,11 +1923,17 @@
                                             <div class="CRR_title"> {{CRRindex}}. 临床可报告范围(Clinical Reportable Range)</div>
                                         {% endif %}
 
-                                        <div class="maintext"> 由于该方法分析测量范围能全面覆盖临床标本的浓度分布，充分满足临床检测的需求，
+                                        <!-- <div class="maintext"> 由于该方法分析测量范围能全面覆盖临床标本的浓度分布，充分满足临床检测的需求，
                                             因此无需进行稀释倍数验证。为了与现有日常检测的临床报告保持一致，临床可报告范围如表{{tableCRRindex}}所示。
+                                        </div> -->
+
+                                        <div class="maintext">为了与现有日常检测的临床报告保持一致，临床可报告范围如表{{tableCRRindex}}所示。
+                                            {% for r in textlist_special %}
+                                                {{r}}
+                                            {% endfor %}
                                         </div>
                                         <table class="Not_Dilution_Table" cellpadding="4">
-                                            <caption>表{{tableCRRindex}}.{{key}}稀释倍数验证结果</caption>
+                                            <caption>表{{tableCRRindex}}.{{key}}临床可报告范围</caption>
                                             <tr class="Not_Dilution_Tabletr">
                                                 <th width="30%">化合物</th>
                                                 <th width="70%">临床可报告范围({{unit}})</th>
@@ -3458,6 +3491,32 @@
                             </td>
                         </tr>
                     {% endif %}
+                    
+                    <tr>
+                        <td class="reference_intervaltd" id="reporter-people">
+                            <table class="End_Table" cellpadding="8" align="center">
+                                <tr>
+                                    <td class="end">&#12288</td>
+                                    <td class="end">报告编辑人：<input type="text"></td>
+                                    <td class="end">&#12288&#12288&#12288&#12288</td>
+                                    <td class="end">日期(Date):<input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td class="end">&#12288</td>
+                                    <td class="end">报告审核人:<input type="text"></td>
+                                    <td class="end">&#12288&#12288&#12288&#12288</td>
+                                    <td class="end">日期(Date):<input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td class="end">&#12288</td>
+                                    <td class="end">报告批准人:<input type="text"></td>
+                                    <td class="end">&#12288&#12288&#12288&#12288</td>
+                                    <td class="end">日期(Date):<input type="text"></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
 
                     <tr>
                         <td>
@@ -3499,6 +3558,7 @@
 {% elif operation == "preview" %}
     <div class="row">
         <div class="submitcheck">
+            
             {% if status == "未提交" %}
                 <form action="{% url 'submitcheck' id 'submitcheck' %}" method="POST" >
                     <input type="submit" id="submitcheck" value="提交审核" class="btn btn-primary noprint" onclick="return submitcheckFunction()">
@@ -3520,7 +3580,9 @@
 {% else %}
     <div class="row">
         <div class="submitcheck">
+            
             {% if status == "待审核" %}
+                
                 <form action="{% url 'submitcheck' id 'level1check' %}">
                     <input type="submit" id="submitcheck" value="主管审核" class="btn btn-primary" onclick="return level1checkFunction()">
                 </form>
@@ -3718,7 +3780,6 @@
     var pagenum = document.getElementById("pagenum");
     console.log(pagenum.value)
 
-
     // for (let i = 0; i < count; i++) {
     //     //     var topValue1 = Number(h * (i + 1));
     //     // var topValue2 = Number(h * (i + 1)) - Number(200 * (i + 1)) + Number(i * 49);
@@ -3755,9 +3816,6 @@
     //     // console.log(foot_PAGE)
 
     // };
-
-
-
 
     function printPage() {
         var pagenuminput = document.getElementById("pagenum");

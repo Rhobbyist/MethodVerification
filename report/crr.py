@@ -258,7 +258,6 @@ def CRRfileread(files, reportinfo, project, platform, manufacturers,Detectionpla
                     except:
                         content.append(line.decode("GB2312").replace("\r\n", "").split("\t")) # linux下
 
-                print(content)
                 nameindex = 0
                 concindex = 0  # 浓度索引，岛津的数据格式决定每个化合物的浓度所在列一定是同一列
                 norm = []  # 化合物列表
@@ -277,10 +276,12 @@ def CRRfileread(files, reportinfo, project, platform, manufacturers,Detectionpla
 
                 for i in range(len(content)):
                     if content[i][0] == "Name":  # 如果某一行第一列为"Name"，则该行第二列为化合物名称
-                        if "-" in content[i][1]:
-                            norm.append(content[i][1].split("-")[0])
-                        else:
-                            norm.append(content[i][1])
+                        # # 若化合物名称后含有“-”，需切除
+                        # if "-" in content[i][1]:
+                        #     norm.append(content[i][1].split("-")[0])
+                        # else:
+                        #     norm.append(content[i][1])
+                        norm.append(content[i][1])
                         norm_row.append(i)
 
                 # 匹配原始数据中与稀释倍数相关(实验号后含有"times")的行

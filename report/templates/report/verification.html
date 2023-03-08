@@ -61,6 +61,7 @@
     </div>
     <div class="container page body">
         <form action="{% url 'verification' %}" method="POST" enctype="multipart/form-data">
+            <input hidden="hidden" value={{id}} name="id">
             <br>
             <div class="row">
                 <div class="col-md-6 col-sm-6 col-xs-6">

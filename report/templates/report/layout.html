@@ -11,9 +11,9 @@
     <link rel="stylesheet" type="text/css" href="{% static 'report/content/site.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'report/content/jquery.dataTables.min.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'media/css/jquery.dataTables.css' %}" />
-    <!-- <link rel="stylesheet" type="text/css" href="{% static 'report/content/main.css' %}" /> -->
 
     <script src="{% static 'report/content/jquery-1.10.2.min.js' %}"></script>
+    <script src="{% static 'report/content/bootstrap.min.js' %}"></script>
     <script src="{% static 'report/content/jquery.dataTables.min.js' %}"></script>
     <!-- <script src="{% static 'report/content/paged.polyfill.js' %}"></script> -->
     <script src="{% static 'report/content/clipboard.js' %}"></script>
@@ -37,6 +37,13 @@
             text-decoration: underline;
             background-color: #555;
         }
+
+        .sys,.sys-dropdown{
+            background-color:#f8f8f8;
+            padding: 0;
+            font-size: 18px; 
+            margin-top: -4px;
+        }
     </style>
 </head>
 
@@ -49,28 +56,41 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a href="/" class="navbar-brand">方法学验证管理系统</a>
+
+                <div class="btn-group navbar-brand">
+                    <button type="button" class="btn sys dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                        aria-expanded="false">
+                        方法学验证管理系统 <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'verification' %}">方法学验证管理系统 - 首页</a></li>
+                        <li><a href="{% url 'instructions' %}">方法学验证管理系统 - 使用说明</a></li>
+                        <li><a href="{% url 'ICS_index' %}">仪器比对报告管理系统</a></li>
+                    </ul>
+                </div>
                 <a href="{% url 'verification' %}" class="format navbar-brand">验证界面</a>
                 <a href="{% url 'login' %}" class="format navbar-brand">报告生成界面</a>
-                <a href="/admin" class="format navbar-brand">后台管理系统</a> 
+                <a href="/admin" class="format navbar-brand">后台管理系统</a>
 
                 <!-- 判断用户是否登陆，登陆显示当前用户和注销按钮 -->
                 {% if User_class == 1%}
-                    <ul class="nav nav-pills pull-right">
-                        <li class="active format navbar-brand" style="font-size:14px;">当前用户:
-                            <span style="font-weight: bold;">{{name}}</span>             
-                        </li>
-                        <li class="active format navbar-brand" style="font-size:14px;">用户等级:
-                            <span style="font-weight: bold;">{{level}}</span>             
-                        </li>
-                        <a href="{% url 'logout' %}" type="submit" class="active format navbar-brand" style="font-size:14px;">注销</a>
-                    </ul>
+                <ul class="nav nav-pills pull-right">
+                    <li class="active format navbar-brand" style="font-size:14px;">当前用户:
+                        <span style="font-weight: bold;">{{name}}</span>
+                    </li>
+                    <li class="active format navbar-brand" style="font-size:14px;">用户等级:
+                        <span style="font-weight: bold;">{{level}}</span>
+                    </li>
+                    <a href="{% url 'logout' %}" type="submit" class="active format navbar-brand"
+                        style="font-size:14px;">注销</a>
+                </ul>
                 <!-- 未登陆显示登录按钮 -->
                 {% else %}
-                    <ul class="nav nav-pills pull-right">
-                        <li class="active format navbar-brand" style="font-size:14px;">当前用户: 未登录</li>
-                        <a href="{% url 'login' %}" type="submit" class="active format navbar-brand" style="font-size:14px;">登录</a>
-                    </ul>
+                <ul class="nav nav-pills pull-right">
+                    <li class="active format navbar-brand" style="font-size:14px;">当前用户: 未登录</li>
+                    <a href="{% url 'login' %}" type="submit" class="active format navbar-brand"
+                        style="font-size:14px;">登录</a>
+                </ul>
                 {% endif %}
             </div>
             <div class="navbar-collapse collapse">

@@ -35,7 +35,7 @@
                 {% if Result.nrows >= Result.lownumber %}
                     <div class="container">
                         {% if ValidationReason %}
-                            <form action="{% url 'verifyagain' %}" method="POST" > 
+                            <form action="{% url 'verifyagain' Lid %}" method="POST" > 
                                 <!-- 1 验证基本信息展示 -->
                                 <div class="basicinfo">
                                     <!-- 标题 -->
@@ -90,6 +90,9 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- 报告编号  -->
+                                <input hidden = "hidden" value="{{Result.Lid}}" name="Lid" id="Lid">
 
                                 <!-- cv上限  -->
                                 <input hidden = "hidden" value="{{Result.maxCV}}" name="maxCV" id="maxCV">
@@ -227,6 +230,9 @@
                                     </div>
                                 </div>
 
+                                <!-- 报告编号  -->
+                                <input hidden = "hidden" value="{{Result.Lid}}" name="Lid" id="Lid">
+
                                 <!-- cv上限  -->
                                 <input hidden = "hidden" value="{{Result.maxCV}}" name="maxCV" id="maxCV">
 
@@ -241,7 +247,7 @@
                                     {%for key,value in Result.jmd_dict.items %}
                                         <div class="col-md-4">
                                             <table border="1" cellpadding="8" id="table">
-                                            <caption><h3>{{key}}</h3></caption>
+                                            <caption><h4>{{key}}</h4></caption>
                                             {% if Result.lownum %}                         
                                                 <tr>
                                                     <th width="20%">实验号</th>
@@ -300,7 +306,7 @@
                     </div>
                 {% else%}
                     <h1 class="alert alert-danger">数据量不足{{Result.lownumber}}个，请补充数据!</h1>
-                    <form action="{% url 'verifyagain' %}" method="POST" > 
+                    <form action="{% url 'verifyagain' Lid %}" method="POST" > 
                         <input hidden = "hidden" value="{{instrument_num}}" name="instrument_num">
                         <input hidden = "hidden" value="{{Detectionplatform}}" name="Detectionplatform">
                         <input hidden = "hidden" value="{{project}}" name="project">
@@ -318,7 +324,7 @@
             <!-- 返回报错信息  --> 
             {% else %}
                 <h2 class="alert alert-danger">{{Result.error_message}}</h2>
-                <form action="{% url 'verifyagain' %}" method="POST" > 
+                <form action="{% url 'verifyagain' Lid %}" method="POST" > 
                     <input hidden = "hidden" value="{{instrument_num}}" name="instrument_num">
                     <input hidden = "hidden" value="{{Detectionplatform}}" name="Detectionplatform">
                     <input hidden = "hidden" value="{{project}}" name="project">

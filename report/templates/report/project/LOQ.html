@@ -140,6 +140,9 @@
 
                     <!--验证结果 -->
                     <input hidden = "hidden" value="" name="LOQ_judge" id="LOQ_judge">
+
+                    <!-- 报告编号  -->
+                    <input hidden = "hidden" value="{{Lid}}" name="Lid" id="Lid">
                     
                     <!-- 2 分界线 -->
                     <h1 class="page-header"></h1>
@@ -284,7 +287,7 @@
                 </form>
 
                 {% if Result.picturenum == 0 and Result.platform == "液质" %}
-                    <form action="{% url 'verifyagain' %}" method="POST" > 
+                    <form action="{% url 'verifyagain' Lid %}" method="POST" >  
                         <input hidden = "hidden" value="{{instrument_num}}" name="instrument_num">
                         <input hidden = "hidden" value="{{Detectionplatform}}" name="Detectionplatform">
                         <input hidden = "hidden" value="{{project}}" name="project">
@@ -302,7 +305,7 @@
                 {% endif %}
             {% else %}
                 <h2 class="alert alert-danger">{{Result.error_message}}</h2>
-                <form action="{% url 'verifyagain' %}" method="POST" > 
+                <form action="{% url 'verifyagain' Lid %}" method="POST" >  
                     <input hidden = "hidden" value="{{instrument_num}}" name="instrument_num">
                     <input hidden = "hidden" value="{{Detectionplatform}}" name="Detectionplatform">
                     <input hidden = "hidden" value="{{project}}" name="project">

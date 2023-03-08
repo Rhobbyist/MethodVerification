@@ -10,7 +10,7 @@ from report.layout import *
 from datetime import datetime
 
 # 重复性精密度数据读取
-def IntraP_fileread(files, reportinfo, namejmd, Detectionplatform, project, platform, manufacturers, Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB, Number_of_compounds,Validation_Reason):
+def IntraP_fileread(files, reportinfo, namejmd, Detectionplatform, project, platform, manufacturers, Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB, Number_of_compounds,Validation_Reason,Lid):
 
     # 第一步:后台数据抓取（最小样本数，最大允许CV）
     id1 = Special.objects.get(project=project).id
@@ -185,11 +185,12 @@ def IntraP_fileread(files, reportinfo, namejmd, Detectionplatform, project, plat
                 for i in range(len(content)):
                     if content[i][0] == "Name":  # 如果某一行第一列为"Name"，则该行第二列为化合物名称
 
-                        # 若化合物名称后含有“-”，需切除
-                        if "-" in content[i][1]:
-                            norm.append(content[i][1].split("-")[0])
-                        else:
-                            norm.append(content[i][1])
+                        # # 若化合物名称后含有“-”，需切除
+                        # if "-" in content[i][1]:
+                        #     norm.append(content[i][1].split("-")[0])
+                        # else:
+                        #     norm.append(content[i][1])
+                        norm.append(content[i][1])
                         norm_row.append(i)
 
                 for i in range(len(content[2])):  # 第二行确定samplename和浓度所在列
@@ -599,8 +600,7 @@ def IntraP_fileread(files, reportinfo, namejmd, Detectionplatform, project, plat
                     jmdone.append(normlist)
 
         ########文件读取完毕#######
-    # print(jmdone)
-
+    
     #  第三步:计算平均值，标准差，CV
 
     '''
@@ -665,6 +665,7 @@ def IntraP_fileread(files, reportinfo, namejmd, Detectionplatform, project, plat
 
     # print(jmd_dict)
     # print(jmdnum)
+    print(effectnum(30.15,3))
 
     #  第四步:数据存入数据库
     # 样本量大于最小样本量，并且超过cv上限的值等于0才将数据存入数据库中
@@ -698,10 +699,10 @@ def IntraP_fileread(files, reportinfo, namejmd, Detectionplatform, project, plat
 
             JMD.objects.bulk_create(insert_list)
 
-    return {'jmd_dict': jmd_dict, "namejmd": namejmd, "nrows": jmdnum, "lownumber": int(lownumber), "maxCV": maxCV, "lownum": lownum, "mediannum": mediannum, "highnum": highnum, "Unit": Unit,"Validation_Reason":Validation_Reason}
+    return {'jmd_dict': jmd_dict, "namejmd": namejmd, "nrows": jmdnum, "lownumber": int(lownumber), "maxCV": maxCV, "lownum": lownum, "mediannum": mediannum, "highnum": highnum, "Unit": Unit,"Validation_Reason":Validation_Reason,"Lid": Lid}
 
 # 中间精密度数据读取
-def InterP_fileread(files, reportinfo, namejmd, Detectionplatform, project, platform, manufacturers, Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB, Number_of_compounds,Validation_Reason):
+def InterP_fileread(files, reportinfo, namejmd, Detectionplatform, project, platform, manufacturers, Unit, digits, ZP_Method_precursor_ion, ZP_Method_product_ion, normAB, Number_of_compounds,Validation_Reason,Lid):
 
     # 第一步:后台数据抓取（最小样本数，最大允许CV,化合物个数）
     id1 = Special.objects.get(project=project).id
@@ -896,22 +897,23 @@ def InterP_fileread(files, reportinfo, namejmd, Detectionplatform, project, plat
 
                     if k < norm_num-1:  # 如果不是最后一个化合物，索引为该化合物所在行到后一个化合物所在行
                         for i in range(norm_row[k], norm_row[k+1]):
-                            if "InterP-L" in file_data.row_values(i)[nameindex]:
+                            if "InterP-L" in str(file_data.row_values(i)[nameindex]):
                                 if k < 1:  # 第一个化合物的样本量即为每个化合物的样本量
                                     jmdnum += 1
                                 low.append(float(file_data.row_values(i)[concindex]))
-                            elif "InterP-M" in file_data.row_values(i)[nameindex]:
+                            elif "InterP-M" in str(file_data.row_values(i)[nameindex]):
                                 median.append(float(file_data.row_values(i)[concindex]))
-                            elif "InterP-H" in file_data.row_values(i)[nameindex]:
+                            elif "InterP-H" in str(file_data.row_values(i)[nameindex]):
                                 high.append(float(file_data.row_values(i)[concindex]))
+            
 
                     else:  # 如果是最后一个化合物，索引为该化合物所在行到总行数
                         for i in range(norm_row[k], nrows):
-                            if "InterP-L" in file_data.row_values(i)[nameindex]:
+                            if "InterP-L" in str(file_data.row_values(i)[nameindex]):
                                 low.append(float(file_data.row_values(i)[concindex]))
-                            elif "InterP-M" in file_data.row_values(i)[nameindex]:
+                            elif "InterP-M" in str(file_data.row_values(i)[nameindex]):
                                 median.append(float(file_data.row_values(i)[concindex]))
-                            elif "InterP-H" in file_data.row_values(i)[nameindex]:
+                            elif "InterP-H" in str(file_data.row_values(i)[nameindex]):
                                 high.append(float(file_data.row_values(i)[concindex]))
 
                 elif manufacturers == "Thermo":
@@ -968,11 +970,12 @@ def InterP_fileread(files, reportinfo, namejmd, Detectionplatform, project, plat
                     for i in range(len(content)):
                         if content[i][0] == "Name":  # 如果某一行第一列为"Name"，则该行第二列为化合物名称
                             # 若化合物名称后含有“-”，需切除(仅添加第一个化合物)        
-                            if index==0:
-                                if "-" in content[i][1]:
-                                    norm.append(content[i][1].split("-")[0])
-                                else:
-                                    norm.append(content[i][1])
+                            if k==0 and index==0:
+                                # if "-" in content[i][1]:
+                                #     norm.append(content[i][1].split("-")[0])
+                                # else:
+                                #     norm.append(content[i][1])
+                                norm.append(content[i][1])
                             norm_row.append(i)
 
                     for i in range(len(content[2])):  # 第二行确定samplename和浓度所在列
@@ -1252,10 +1255,12 @@ def InterP_fileread(files, reportinfo, namejmd, Detectionplatform, project, plat
         jmd_dict[norm[i]] = jmdtwo[i]
 
     print(jmd_dict)
+    
 
     #  第四步:数据存入数据库
     # 如果超过cv上限的值等于0才将数据存入数据库中
     if cvjudgenum == 0 and jmdnum >= lownumber:
+        
         insert_list = []
 
         for key, value in jmd_dict.items():
@@ -1277,7 +1282,7 @@ def InterP_fileread(files, reportinfo, namejmd, Detectionplatform, project, plat
                     if i[0] != "均值" and i[0] != "标准差" and i[0] != "CV(%)":
                         insert_list.append(JMD(reportinfo=reportinfo, namejmd=namejmd,norm=key, Experimentnum=i[0], low=i[1], median=i[2], high=i[3]))
 
-        JMD.objects.bulk_create(insert_list)               
+        JMD.objects.bulk_create(insert_list)           
     else:
         if Detectionplatform=="研发与创新平台":
             insert_list = []
@@ -1302,7 +1307,7 @@ def InterP_fileread(files, reportinfo, namejmd, Detectionplatform, project, plat
                             insert_list.append(JMD(reportinfo=reportinfo, namejmd=namejmd,norm=key, Experimentnum=i[0], low=i[1], median=i[2], high=i[3]))
             JMD.objects.bulk_create(insert_list)
 
-    return {'jmd_dict': jmd_dict, "namejmd": namejmd, "nrows": jmdnum, "lownumber": int(lownumber), "maxCV": maxCV, "lownum": lownum, "mediannum": mediannum, "highnum": highnum, "Unit": Unit}
+    return {'jmd_dict': jmd_dict, "namejmd": namejmd, "nrows": jmdnum, "lownumber": int(lownumber), "maxCV": maxCV, "lownum": lownum, "mediannum": mediannum, "highnum": highnum, "Unit": Unit,"Lid": Lid}
 
 # 重复性精密度数据抓取，关联到最终报告预览界面
 def related_PNjmd(id):
@@ -1777,9 +1782,21 @@ def related_jmdendconclusion(id):
                         M_times += 1
                     if j.Experimentnum != "均值" and j.Experimentnum != "标准差" and j.Experimentnum != "CV(%)" and j.high != "":
                         H_times += 1
-                middle_list.append(L_times)
-                middle_list.append(M_times)
-                middle_list.append(H_times)
+                if L_times == 0:
+                    middle_list.append("/")
+                else:
+                    middle_list.append(L_times)
+                
+                if M_times == 0:
+                    middle_list.append("/")
+                else:
+                    middle_list.append(L_times)
+                
+                if H_times == 0:
+                    middle_list.append("/")
+                else:
+                    middle_list.append(L_times)
+                
 
                 for k in middle_table_PN:
                     if k.Experimentnum == "均值":
@@ -1812,33 +1829,44 @@ def related_jmdendconclusion(id):
                     if j.Experimentnum != "均值" and j.Experimentnum != "标准差" and j.Experimentnum != "CV(%)" and j.high != "":
                         H_times += 1
                         highdata.append(float(j.high))
-                middle_list.append(L_times)
-                middle_list.append(M_times)
-                middle_list.append(H_times)
+                if L_times == 0:
+                    middle_list.append("/")
+                else:
+                    middle_list.append(L_times)
+                
+                if M_times == 0:
+                    middle_list.append("/")
+                else:
+                    middle_list.append(L_times)
+                
+                if H_times == 0:
+                    middle_list.append("/")
+                else:
+                    middle_list.append(L_times)
 
                 if lowdata != []:
                     lowmean = mean(lowdata)
                     lowsd = sd(lowdata)
                     lowcv = cv(lowdata)
                 else:
-                    lowmean = ''
-                    lowcv = ''
+                    lowmean = '/'
+                    lowcv = '/'
 
                 if mediandata != []:
                     medianmean = mean(mediandata)
                     mediansd = sd(mediandata)
                     mediancv = cv(mediandata)
                 else:
-                    medianmean = ''
-                    mediancv = ''
+                    medianmean = '/'
+                    mediancv = '/'
 
                 if highdata != []:
                     highmean = mean(highdata)
                     highsd = sd(highdata)
                     highcv = cv(highdata)
                 else:
-                    highmean = ''
-                    highcv = ''
+                    highmean = '/'
+                    highcv = '/'
 
                 middle_list.append(lowmean)
                 middle_list.append(medianmean)

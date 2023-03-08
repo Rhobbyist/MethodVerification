@@ -439,11 +439,13 @@ def LOQfileread(files,reportinfo,project,platform,Detectionplatform,manufacturer
 
                     for i in range(len(content)): 
                         if content[i][0]=="Name": #如果某一行第一列为"Name"，则该行第二列为化合物名称
-                            if "-" in content[i][1]:
-                                norm.append(content[i][1].split("-")[0])
-                            else:
-                                norm.append(content[i][1])
-                            norm_row.append(i)        
+                            # # 若化合物名称后含有“-”，需切除
+                            # if "-" in content[i][1]:
+                            #     norm.append(content[i][1].split("-")[0])
+                            # else:
+                            #     norm.append(content[i][1])
+                            norm.append(content[i][1])
+                            norm_row.append(i)       
 
                     for k in range(len(norm)): # 循环化合物列表
                         AMR_STD=[]
@@ -915,9 +917,9 @@ def LOQgeneral_multiplefileread(files,reportinfo,project,platform,Detectionplatf
         Unitlist.append(i.unit)
 
     # 未在后台管理系统里准确设置离子对数值,直接返回并提示
-    if len(normAB)!=Number_of_compounds:
-        error_message="未在后台管理系统里准确设置离子对数值!"  
-        return {"error_message":error_message}
+    # if len(normAB)!=Number_of_compounds:
+    #     error_message="未在后台管理系统里准确设置离子对数值!"  
+    #     return {"error_message":error_message}
 
     #  第二步:开始文件读取
 
@@ -939,15 +941,26 @@ def LOQgeneral_multiplefileread(files,reportinfo,project,platform,Detectionplatf
 
     picturelist=[] # 图片文件列表
     picturenum=0 # 上传文件中的图片个数
+    dataindex=0 # 数据文件索引
+
+    for file in files: 
+        if '.png' in file.name or ".jpg" in file.name or ".JPG" in file.name or ".PNG" in file.name or ".jpeg" in file.name:   
+            picturenum+=1
+            picturelist.append(file)
+    
+    if '.png' in files[0].name or ".jpg" in files[0].name or ".JPG" in files[0].name or ".PNG" in files[0].name or ".jpeg" in files[0].name:   
+        dataindex=picturenum
+    else:
+        pass
 
     for k in range(norm_num):  # 多个文件上传时，先循环化合物，在循环文件
         normdict={} #每个化合物数据字典
         for index,file in enumerate(files):
             # 文件为图片(.png或.JPG)
-            if '.png' in file.name or ".JPG" in file.name:    
+            if '.png' in file.name or ".jpg" in file.name or ".JPG" in file.name or ".PNG" in file.name or ".jpeg" in file.name:   
                 if k == 0:
-                    picturenum+=1
-                    picturelist.append(file)
+                    # picturenum+=1
+                    # picturelist.append(file)
                     if AMRpicture.objects.filter(reportinfo = reportinfo,img = "img/"+file.name):
                         pass
                     else:
@@ -959,175 +972,179 @@ def LOQgeneral_multiplefileread(files,reportinfo,project,platform,Detectionplatf
                         id.append(item.reportinfo_id)
 
             else:
-                if manufacturers =="AB":
+                if platform=="液质":
+                    if manufacturers =="AB":
 
-                    # 定义化合物列表，列表统一命名为norm(第一个化合物才需要设置)
-                    if index==picturenum:
-                        norm = normAB
+                        # 定义化合物列表，列表统一命名为norm(第一个化合物才需要设置)
+                        if index==dataindex:
+                            norm = normAB
 
-                    # 获取上传的文件
-                    file_data = Document(file)
+                        # 获取上传的文件
+                        file_data = Document(file)
 
-                    # 每个表格最上方的标题内容列表，含有母离子和子离子的信息。需依此及母离子和子离子列表判断table索引
-                    paragraphs = [] 
+                        # 每个表格最上方的标题内容列表，含有母离子和子离子的信息。需依此及母离子和子离子列表判断table索引
+                        paragraphs = [] 
 
-                    # 若标题长度为0或为换行等，不添加进入标题内容列表
-                    for p in file_data.paragraphs:
-                        if len(p.text) != 0 and p.text != "\n" and len(p.text.strip()) != 0:
-                            paragraphs.append(p.text.strip())
+                        # 若标题长度为0或为换行等，不添加进入标题内容列表
+                        for p in file_data.paragraphs:
+                            if len(p.text) != 0 and p.text != "\n" and len(p.text.strip()) != 0:
+                                paragraphs.append(p.text.strip())
 
-                    # 确定table索引，母离子和子离子都与后台管理系统中设置的数值相同才证明是需要读取的定量表格(第一个化合物才需要设置)
-                    if index==picturenum:
-                        tableindex=[]
+                        # 确定table索引，母离子和子离子都与后台管理系统中设置的数值相同才证明是需要读取的定量表格(第一个化合物才需要设置)
+                        if index==dataindex:
+                            tableindex=[]
 
-                        # 1 每个化合物都含有定性和定量表格的计算方式
-                        for i in range(len(paragraphs)):
-                            for j in range(len(ZP_Method_precursor_ion)):
-                                if ZP_Method_precursor_ion[j] in paragraphs[i] and ZP_Method_product_ion[j] in paragraphs[i]:
-                                    tableindex.append(2*i+1) 
+                            # 1 每个化合物都含有定性和定量表格的计算方式
+                            for i in range(len(paragraphs)):
+                                for j in range(len(ZP_Method_precursor_ion)):
+                                    if ZP_Method_precursor_ion[j] in paragraphs[i] and ZP_Method_product_ion[j] in paragraphs[i]:
+                                        tableindex.append(2*i+1) 
 
-                    tables = file_data.tables #获取文件中的表格集
+                        tables = file_data.tables #获取文件中的表格集
 
-                    # 无需再循环定量表格的索引，依据最外层for循环确定循环中的文件中的定量表格
-                    # 获取文件中的定量表格
-                    tablequantify = tables[tableindex[k]] 
+                        # 无需再循环定量表格的索引，依据最外层for循环确定循环中的文件中的定量表格
+                        # 获取文件中的定量表格
+                        tablequantify = tables[tableindex[k]] 
 
-                    # 先把表格里的所有数据取出来放进一个列表中，读取速度会比直接读表格快很多
-                    cells=tablequantify._cells
-                    ROWS=len(tablequantify.rows)
-                    COLUMNS=len(tablequantify.columns)
-                    rowdatalist=[] #每一行的数据
-                    rowdatagatherlist=[] #大列表，包含每一行的数据
+                        # 先把表格里的所有数据取出来放进一个列表中，读取速度会比直接读表格快很多
+                        cells=tablequantify._cells
+                        ROWS=len(tablequantify.rows)
+                        COLUMNS=len(tablequantify.columns)
+                        rowdatalist=[] #每一行的数据
+                        rowdatagatherlist=[] #大列表，包含每一行的数据
 
-                    for i in range(ROWS*COLUMNS):
-                        text=cells[i].text.replace("\n","")
-                        text=text.strip() #去除空白符
-                        if i % COLUMNS != 0 or i == 0:
-                            rowdatalist.append(text)
-                        else:
-                            rowdatagatherlist.append(rowdatalist)
-                            rowdatalist=[]
-                            rowdatalist.append(text)
-                    rowdatagatherlist.append(rowdatalist)
+                        for i in range(ROWS*COLUMNS):
+                            text=cells[i].text.replace("\n","")
+                            text=text.strip() #去除空白符
+                            if i % COLUMNS != 0 or i == 0:
+                                rowdatalist.append(text)
+                            else:
+                                rowdatagatherlist.append(rowdatalist)
+                                rowdatalist=[]
+                                rowdatalist.append(text)
+                        rowdatagatherlist.append(rowdatalist)
 
-                    nameindex=0  #实验号索引
-                    theoryconindex=0   #理论浓度索引列表（可能不止一个化合物，因此需要把索引放在一个列表里，下同）
-                    concindex=0  #实际浓度索引列表
-                    accuracyindex=0    #回收率索引列表
+                        nameindex=0  #实验号索引
+                        theoryconindex=0   #理论浓度索引列表（可能不止一个化合物，因此需要把索引放在一个列表里，下同）
+                        concindex=0  #实际浓度索引列表
+                        accuracyindex=0    #回收率索引列表
 
-                    # 读取表格的第一行的单元格,判断实验号和浓度索引
-                    for i in range(len(rowdatagatherlist[0])):
-                        if rowdatagatherlist[0][i] == "Sample Name" :
-                            nameindex=i
-                        elif "Target" in rowdatagatherlist[0][i]:
-                            theoryconindex=i
-                        elif "Calculated Conc" in rowdatagatherlist[0][i]:
-                            concindex=i
-                        elif "Accuracy" in rowdatagatherlist[0][i]:
-                            accuracyindex=i
-        
-                    # 未准确设置表头列名,直接返回并提示!
-                    if theoryconindex==0 or concindex==0 or accuracyindex==0:
-                        error_message="未准确设置表头列名!"
-                        return {"error_message":error_message}
+                        # 读取表格的第一行的单元格,判断实验号和浓度索引
+                        for i in range(len(rowdatagatherlist[0])):
+                            if rowdatagatherlist[0][i] == "Sample Name" :
+                                nameindex=i
+                            elif "Target" in rowdatagatherlist[0][i]:
+                                theoryconindex=i
+                            elif "Calculated Conc" in rowdatagatherlist[0][i]:
+                                concindex=i
+                            elif "Accuracy" in rowdatagatherlist[0][i]:
+                                accuracyindex=i
+            
+                        # 未准确设置表头列名,直接返回并提示!
+                        if theoryconindex==0 or concindex==0 or accuracyindex==0:
+                            error_message="未准确设置表头列名!"
+                            return {"error_message":error_message}
 
-                    # 确认原始数据中与AMR相关(实验号前含有"AMR-")的sample name名，放进一个列表(第一个化合物才需要设置)
-                    if index==picturenum:
-                        AMR_STD=[] 
-                        for i in range(len(rowdatagatherlist)): 
-                            if "AMR-" in rowdatagatherlist[i][nameindex] and rowdatagatherlist[i][nameindex][0:6] not in AMR_STD:
-                                AMR_STD.append(rowdatagatherlist[i][nameindex][0:6])
-                        
-                        # 按顺序重新排列AMR_STD
-                        AMR_STD_sort=[]
-                        for i in S:
-                            for j in AMR_STD:
-                                if i in j:
-                                    AMR_STD_sort.append(j)
+                        # 确认原始数据中与AMR相关(实验号前含有"AMR-")的sample name名，放进一个列表(第一个化合物才需要设置)
+                        if index==dataindex:
+                            AMR_STD=[] 
+                            for i in range(len(rowdatagatherlist)): 
+                                if "AMR-" in rowdatagatherlist[i][nameindex] and rowdatagatherlist[i][nameindex][0:6] not in AMR_STD:
+                                    AMR_STD.append(rowdatagatherlist[i][nameindex][0:6])
+                            
+                            # 按顺序重新排列AMR_STD
+                            AMR_STD_sort=[]
+                            for i in S:
+                                for j in AMR_STD:
+                                    if i in j:
+                                        AMR_STD_sort.append(j)
 
-                    for j in range(len(AMR_STD_sort)): 
-                        # 第一个化合物才需要设置
-                        if index==picturenum:
-                            normdict[AMR_STD_sort[j]]=[]
+                        for j in range(len(AMR_STD_sort)): 
+                            # 第一个化合物才需要设置
+                            if index==dataindex:
+                                normdict[AMR_STD_sort[j]]=[]
 
-                        for i in range(len(rowdatagatherlist)): # 循环原始数据中的每一行       
-                            if rowdatagatherlist[i][nameindex][0:6] == AMR_STD_sort[j]: # 如果实验号命名方式匹配上，则在相应列表中添加数据 
-                                # 添加理论浓度(需避免重复添加)
-                                if effectnum(rowdatagatherlist[i][theoryconindex],digits) not in normdict[AMR_STD_sort[j]]:
-                                    normdict[AMR_STD_sort[j]].append(effectnum(rowdatagatherlist[i][theoryconindex],digits))
+                            for i in range(len(rowdatagatherlist)): # 循环原始数据中的每一行       
+                                if rowdatagatherlist[i][nameindex][0:6] == AMR_STD_sort[j]: # 如果实验号命名方式匹配上，则在相应列表中添加数据 
+                                    # 添加理论浓度(需避免重复添加)
+                                    if effectnum(rowdatagatherlist[i][theoryconindex],digits) not in normdict[AMR_STD_sort[j]]:
+                                        normdict[AMR_STD_sort[j]].append(effectnum(rowdatagatherlist[i][theoryconindex],digits))
 
-                                # 添加检测值
-                                normdict[AMR_STD_sort[j]].append(effectnum(rowdatagatherlist[i][concindex],digits))
+                                    # 添加检测值
+                                    normdict[AMR_STD_sort[j]].append(effectnum(rowdatagatherlist[i][concindex],digits))
 
-                                # 添加回收率
-                                normdict[AMR_STD_sort[j]].append(new_round(rowdatagatherlist[i][accuracyindex],2))
+                                    # 添加回收率
+                                    normdict[AMR_STD_sort[j]].append(new_round(rowdatagatherlist[i][accuracyindex],2))
 
-                elif manufacturers =="Thermo":
-                    data = xlrd.open_workbook(filename=None, file_contents=file.read())  # 读取表格
-                    file.seek(0, 0) # 循环读取同一个文件多遍，需加此句代码移动文件读取指针到开头，否则会报错
+                    elif manufacturers =="Thermo":
+                        data = xlrd.open_workbook(filename=None, file_contents=file.read())  # 读取表格
+                        file.seek(0, 0) # 循环读取同一个文件多遍，需加此句代码移动文件读取指针到开头，否则会报错
 
-                    if index==picturenum:
-                        norm = []  # Thermo的原始数据格式为一个化合物一个sheet,获取每个sheet的名字,即为化合物名称
-                        sheetindex = []  # 需要的化合物所在sheet索引列表
-                        for index2 in range(len(data.sheet_names())):
-                            norm.append(data.sheet_names()[index2].split("Sheet1")[1])
-                            sheetindex.append(index2)
+                        if index==dataindex:
+                            norm = []  # Thermo的原始数据格式为一个化合物一个sheet,获取每个sheet的名字,即为化合物名称
+                            sheetindex = []  # 需要的化合物所在sheet索引列表
+                            for index2 in range(len(data.sheet_names())):
+                                norm.append(data.sheet_names()[index2].split("Sheet1")[1])
+                                sheetindex.append(index2)
 
-                    # 循环读取每个sheet工作表,即为每个化合物的表
-                    file_data = data.sheets()[sheetindex[k]]
-                    nrows=file_data.nrows
-                    ncols=file_data.ncols
+                        # 循环读取每个sheet工作表,即为每个化合物的表
+                        file_data = data.sheets()[sheetindex[k]]
+                        nrows=file_data.nrows
+                        ncols=file_data.ncols
 
-                    nameindex=0  #实验号索引
-                    concindex=0  #实际浓度索引
-                    theoryconcindex=0   #理论浓度索引
-                    accuracyindex=0   #回收率索引
-                    for i in range(len(file_data.row_values(8))):  
-                        if file_data.row_values(8)[i]=="Raw File Name":
-                            nameindex=i
-                        elif file_data.row_values(8)[i]=="Calculated Amount":
-                            concindex=i
-                        elif file_data.row_values(8)[i]=="Theoretical Amount":
-                            theoryconcindex=i
-                        elif file_data.row_values(8)[i]=="Amount Diff":
-                            accuracyindex=i
+                        nameindex=0  #实验号索引
+                        concindex=0  #实际浓度索引
+                        theoryconcindex=0   #理论浓度索引
+                        accuracyindex=0   #回收率索引
+                        for i in range(len(file_data.row_values(8))):  
+                            if file_data.row_values(8)[i]=="Raw File Name":
+                                nameindex=i
+                            elif file_data.row_values(8)[i]=="Calculated Amount":
+                                concindex=i
+                            elif file_data.row_values(8)[i]=="Theoretical Amount":
+                                theoryconcindex=i
+                            elif file_data.row_values(8)[i]=="Amount Diff":
+                                accuracyindex=i
 
-                    # 未规范设置表格列名
-                    if concindex == 0 or theoryconcindex == 0 or accuracyindex == 0:
-                        error_message = "未规范设置文件列名，请检查并规范设置后重新提交数据!"
-                        return {"error_message": error_message}
+                        # 未规范设置表格列名
+                        if concindex == 0 or theoryconcindex == 0 or accuracyindex == 0:
+                            error_message = "未规范设置文件列名，请检查并规范设置后重新提交数据!"
+                            return {"error_message": error_message}
 
-                    # AMR实验号命名格式:"AMR-S1-B1",lines[j][nameindex][0:6]即为"AMR-S1"
-                    if index==picturenum:
-                        AMR_STD=[] 
-                        for i in range(nrows):
-                            if "AMR-" in file_data.row_values(i)[nameindex] and file_data.row_values(i)[nameindex][0:6] not in AMR_STD:
-                                AMR_STD.append(file_data.row_values(i)[nameindex][0:6])
+                        # AMR实验号命名格式:"AMR-S1-B1",lines[j][nameindex][0:6]即为"AMR-S1"
+                        if index==dataindex:
+                            AMR_STD=[] 
+                            for i in range(nrows):
+                                if "AMR-" in file_data.row_values(i)[nameindex] and file_data.row_values(i)[nameindex][0:6] not in AMR_STD:
+                                    AMR_STD.append(file_data.row_values(i)[nameindex][0:6])
 
-                        # 按顺序重新排列AMR_STD
-                        AMR_STD_sort=[]
-                        for i in S:
-                            for j in AMR_STD:
-                                if i in j:
-                                    AMR_STD_sort.append(j)
+                            # 按顺序重新排列AMR_STD
+                            AMR_STD_sort=[]
+                            for i in S:
+                                for j in AMR_STD:
+                                    if i in j:
+                                        AMR_STD_sort.append(j)
 
-                    # 从原始数据表格中抓取数据
-                    for j in range(len(AMR_STD_sort)): 
-                        if index==picturenum:
-                            normdict[AMR_STD_sort[j]]=[]
-                                    
-                        for i in range(nrows): # 循环原始数据中的每一行
-                            if file_data.row_values(i)[nameindex][0:6] == AMR_STD_sort[j]: # 如果实验号命名方式匹配上，则在相应列表中添加相应数据              
-                                # 添加理论浓度(需避免重复添加)
-                                if effectnum(file_data.row_values(i)[theoryconcindex],digits) not in normdict[AMR_STD_sort[j]]:
-                                    normdict[AMR_STD_sort[j]].append(effectnum(file_data.row_values(i)[theoryconcindex],digits))
+                        # 从原始数据表格中抓取数据
+                        for j in range(len(AMR_STD_sort)): 
+                            if index==dataindex:
+                                normdict[AMR_STD_sort[j]]=[]
+                                        
+                            for i in range(nrows): # 循环原始数据中的每一行
+                                if file_data.row_values(i)[nameindex][0:6] == AMR_STD_sort[j]: # 如果实验号命名方式匹配上，则在相应列表中添加相应数据              
+                                    # 添加理论浓度(需避免重复添加)
+                                    if effectnum(file_data.row_values(i)[theoryconcindex],digits) not in normdict[AMR_STD_sort[j]]:
+                                        normdict[AMR_STD_sort[j]].append(effectnum(file_data.row_values(i)[theoryconcindex],digits))
 
-                                # 添加检测值
-                                normdict[AMR_STD_sort[j]].append(effectnum(file_data.row_values(i)[concindex],digits))
+                                    # 添加检测值
+                                    normdict[AMR_STD_sort[j]].append(effectnum(file_data.row_values(i)[concindex],digits))
 
-                                # 添加回收率
-                                accuracyvalue = 100 - float(file_data.row_values(i)[accuracyindex])
-                                normdict[AMR_STD_sort[j]].append(new_round(accuracyvalue,2))
+                                    # 添加回收率
+                                    accuracyvalue = 100 - float(file_data.row_values(i)[accuracyindex])
+                                    normdict[AMR_STD_sort[j]].append(new_round(accuracyvalue,2))
+
+                elif platform == "ICP-MS":
+                    pass
 
         AMR_dict[norm[k]]=normdict # 第一个化合物的数据列表normdict循环完成，放入最终字典AMR_dict中，开始循环下一个化合物
 
@@ -1221,7 +1238,7 @@ def LOQgeneral_multiplefileread(files,reportinfo,project,platform,Detectionplatf
 
 
 ## 检出限数据上传读取
-def LODfileread(files,reportinfo,project,platform,manufacturers,Unit,digits,ZP_Method_precursor_ion,ZP_Method_product_ion):
+def LODfileread(files,reportinfo,project,platform,manufacturers,Unit,digits,ZP_Method_precursor_ion,ZP_Method_product_ion, normAB, Number_of_compounds):
     LOD_dict={}
 
     if platform=="ICP-MS":
@@ -1293,7 +1310,7 @@ def LODfileread(files,reportinfo,project,platform,manufacturers,Unit,digits,ZP_M
 
     else:
         for file in files:
-            if '.png' in file.name:
+            if '.png' in file.name or ".jpg" in file.name or ".JPG" in file.name or ".PNG" in file.name or ".jpeg" in file.name:  
                 if LODpicture.objects.filter(reportinfo = reportinfo,img = "img2/"+file.name):
                     pass
                 else:
@@ -1463,11 +1480,33 @@ def related_AMR(id,unit):
                 middle_objs = AMRpicture.objects.filter(reportinfo_id=id,name__startswith=key) #图片数据表     
                 objs.extend(middle_objs)
 
+        elif "NPP-H" in project:
+            objs=[]
+            for key in AMR_dict.keys():
+                middle_objs = AMRpicture.objects.filter(reportinfo_id=id,name__startswith=key) #图片数据表     
+                objs.extend(middle_objs)
+
+        elif "血清中4种类固醇激素" in project:
+            objs=[]
+            for key in AMR_dict.keys():
+                print(key)
+                middle_objs = AMRpicture.objects.filter(reportinfo_id=id,name__startswith=key) #图片数据表     
+                objs.extend(middle_objs)
+        
+        elif "血斑CAH二级筛查" in project:
+            objs=[]
+            for key in AMR_dict.keys():
+                print(key)
+                middle_objs = AMRpicture.objects.filter(reportinfo_id=id,name__startswith=key) #图片数据表     
+                objs.extend(middle_objs)
+
         else:
             objs=[]
             for key in AMR_dict.keys():
                 middle_objs = AMRpicture.objects.filter(reportinfo_id=id,name__contains=key) #图片数据表     
                 objs.extend(middle_objs)
+
+        print(objs)
 
         if len(textlist_special)!=0:
             return {"AMR_dict":AMR_dict,"AMR_textlist_end":AMR_textlist_end,"textlist":textlist_special,"serial":len(textlist_special)+1,"id":id,"objs":objs}
@@ -1543,8 +1582,6 @@ def related_LOD(id):
 
 # AMR最终结论表格进入最终报告
 def related_AMRconclusion(id): 
-    
-
 # try:
     # 定义需要生成的字典
     AMRconclusion_dict = {}

@@ -1,0 +1,155 @@
+/***********************
+********* 鑷繁娣诲姞鐨凜SS ******
+************************/
+
+
+body {
+    color: #333;
+    font-size:1rem;
+      background-color: #fff;
+  }
+  
+  a {
+    color: black;
+  }
+  
+  p{
+      color: #333;
+      margin-bottom: 1.5em;
+      margin-top: 1em;
+      line-height: 1.5;
+      word-break: break-word;
+      /*font-size: 1.1em;*/
+      background-color: #fff;
+  }
+  
+  h1{
+      font-size: 2em;
+      font-weight: 700;
+      margin-bottom: .5em;
+  }
+  h2{
+      font-size: 1.6em;
+      font-weight: 600;
+      margin-bottom: .3em;
+  }
+  
+  h3{
+      font-size: 1.4em;
+      font-weight: 600;
+      margin-bottom: .3em;
+  }
+  
+  h4{
+      font-size: 1.2em;
+      font-weight: 600;
+      margin-bottom: .3em;
+  }
+  
+  img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      box-shadow: 5px 5px 5px grey;
+  }
+  
+  
+  pre {
+      line-height: 1.6rem;
+      padding: 5px 10px 0;
+      background-color: #eee;
+      border-radius: 2px;
+  }
+  
+  #top_nav{
+    padding:10px 150px 10px 140px !important;
+  }
+  
+  #foot_nav{
+    padding:5px 150px 5px 140px !important;
+  }
+  
+  #top_bar .nav-item {
+    font-size:1.1rem;
+  }
+  
+  #top_bar .nav-item.active {
+    font-weight: 400;
+  }
+  
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #417690 !important;
+    /*color: #17a2b8 !important;*/
+  }
+  
+  .nav-pills a {
+    font-size: 1.3rem;
+  }
+  
+  
+  .list-group-item.active{
+    color: black;
+    background-color: #17a2b8;
+  }
+  
+  div.navbar-sider {
+    border-right: 1px grey solid;
+  }
+  
+  div.navbar-sider a.list-group-item {
+    border: 0;
+  }
+  
+  #back-to-top {
+    box-shadow: 5px 5px 2px #888888;
+    position: fixed;
+    bottom: 60px;
+    right:20px;
+    color: whitesmoke;
+    background: #3ac57d;
+    width: 50px;
+    height: 50px;
+    border-radius: 2px;
+    text-align: center;
+  }
+  
+  #back-to-top>span {
+    font-size: 30px;
+    margin:10px auto;
+  }
+  
+  .comment {
+    margin-bottom: 10px;
+      /*padding:0;*/
+  }
+  
+  .comment img {
+      margin-top: 5px;
+      margin-left:20px;
+      margin-right:10px;
+      width:50px; height:50px; border-radius:50%; overflow:hidden;
+  }
+  
+  .comment p {
+      margin-bottom: 0;
+  }
+  
+  .comment-content {
+      border-bottom: 1px dashed lightgrey;
+      border-left: 1px dashed #2d7da4;
+      padding-bottom: 0;
+  }
+  
+  .page-link {
+      color:#17a2b8;
+  }
+  
+  
+  .page-item.active .page-link {
+      color: #fff;
+      background-color: #17a2b8;
+      border-color: #17a2b8;
+  }

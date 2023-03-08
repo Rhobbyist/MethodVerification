@@ -1687,3 +1687,47 @@ class BulkGetOrCreateManager(models.Manager):
         self.bulk_create(non_existing_objects, batch_size=999)
 
         return super().get_queryset().filter(**lookup)
+
+# 仪器比对报告生成系统数据库表
+# 1 参数设置
+class ICS_parameters_table(models.Model):
+    project = models.CharField(max_length=32)  # 项目名称
+    criteria1_range = models.CharField(max_length=32)  # 判断标准一适用范围
+    criteria1 = models.CharField(max_length=32)  # 判断标准一
+    criteria2_range = models.CharField(max_length=32)  # 判断标准二适用范围
+    criteria2 = models.CharField(max_length=32)  # 判断标准二
+    level1 = models.CharField(max_length=32)  # 医学决定水平一
+    level2 = models.CharField(max_length=32)  # 医学决定水平二
+    digits = models.CharField(max_length=32)  # 有效数字位数
+    unit= models.CharField(max_length=32)  # 单位
+    LOQ = models.CharField(max_length=32)  # LOQ
+    ALE = models.CharField(max_length=32)  # ALE
+
+# 2 报告主表
+class ICS_main_table(models.Model):
+    project = models.CharField(max_length=32)  # 比对项目名称
+    target = models.CharField(max_length=32)  # 检测系统A
+    compare = models.CharField(max_length=32)  # 检测系统B
+    lastdate = models.CharField(max_length=32)  # 上次验证时间
+    english_code = models.CharField(max_length=32)  # 英文代码
+    chinese_code = models.CharField(max_length=32)  # 中文代码
+
+    compare_goal = models.CharField(max_length=32)  # 比对目的
+    reagent = models.CharField(max_length=32)  # 检测试剂
+    batch = models.CharField(max_length=32)  # 批号
+    testdate = models.CharField(max_length=32)  # 检测日期
+    assessdate = models.CharField(max_length=32)  # 评估日期
+    testname = models.CharField(max_length=32)  # 检测人员
+
+    researchname = models.CharField(max_length=32)  # 调查者
+    researchdate1 = models.CharField(max_length=32)  # 调查日期1
+    director = models.CharField(max_length=32)  # 主任
+    researchdate2 = models.CharField(max_length=32)  # 调查日期2
+
+# 3 报告相关数据表
+class ICS_data_table(models.Model):
+    ics_main_table = models.ForeignKey(ICS_main_table,on_delete = models.CASCADE)
+    samplename = models.CharField(max_length=32)  # 样本编号
+    resultA = models.CharField(max_length=32)  # 检测系统A结果
+    resultB = models.CharField(max_length=32)  # 检测系统B结果
+    bias = models.CharField(max_length=32)  # 偏倚/一致性判断

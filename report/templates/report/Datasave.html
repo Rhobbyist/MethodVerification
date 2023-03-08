@@ -2,7 +2,7 @@
 {% block content %} 
 
     <h2 class="alert alert-success">{{HttpResponse}}</h2>
-    <form action="{% url 'verifyagain' %}" method="POST" > 
+    <form action="{% url 'verifyagain' id %}" method="POST" > 
         <input hidden = "hidden" value="{{instrument_num}}" name="instrument_num">
         <input hidden = "hidden" value="{{Detectionplatform}}" name="Detectionplatform">
         <input hidden = "hidden" value="{{project}}" name="project">

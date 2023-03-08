@@ -461,11 +461,14 @@ def Matrix_effect_fileread(files,Detectionplatform, reportinfo,project,platform,
 
                 for i in range(len(content)): 
                     if content[i][0]=="Name": #如果某一行第一列为"Name"，则该行第二列为化合物名称
-                        if "-" in content[i][1]:
-                            norm.append(content[i][1].split("-")[0])
-                        else:
-                            norm.append(content[i][1])
+                        # # 若化合物名称后含有“-”，需切除
+                        # if "-" in content[i][1]:
+                        #     norm.append(content[i][1].split("-")[0])
+                        # else:
+                        #     norm.append(content[i][1])
+                        norm.append(content[i][1])
                         norm_row.append(i)
+                
 
                 # 循环每个化合物
                 for k in range(len(norm)):  
